@@ -33,7 +33,7 @@ async function main() {
       description: 'Retrieve the entire current.md file contents',
       inputSchema: {},
     },
-    async() => {
+    () => {
       try {
         const filePath = join(workingDir, 'current.md');
         const content = readFileSync(filePath, 'utf-8');
@@ -66,7 +66,7 @@ async function main() {
       description: 'Retrieve the entire backlog.md file contents',
       inputSchema: {},
     },
-    async() => {
+    () => {
       try {
         const filePath = join(workingDir, 'backlog.md');
         const content = readFileSync(filePath, 'utf-8');
