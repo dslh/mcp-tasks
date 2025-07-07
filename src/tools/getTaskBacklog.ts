@@ -6,7 +6,7 @@ export const name = 'get_task_backlog';
 
 export const config = {
   title: 'Get Task Backlog',
-  description: 'Retrieve the entire backlog.md file contents',
+  description: 'Retrieve the backlog of as-yet unscheduled tasks',
   inputSchema: {},
 };
 
@@ -28,7 +28,7 @@ export function handler() {
     return {
       content: [{
         type: 'text' as const,
-        text: `Error reading backlog.md: ${errorMessage}`,
+        text: `Error reading task backlog: ${errorMessage}`,
       }],
       isError: true,
     };

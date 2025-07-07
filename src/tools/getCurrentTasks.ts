@@ -6,7 +6,7 @@ export const name = 'get_current_tasks';
 
 export const config = {
   title: 'Get Current Tasks',
-  description: 'Retrieve the entire current.md file contents',
+  description: 'Retrieve all current, recent, and upcoming tasks',
   inputSchema: {},
 };
 
@@ -28,7 +28,7 @@ export function handler() {
     return {
       content: [{
         type: 'text' as const,
-        text: `Error reading current.md: ${errorMessage}`,
+        text: `Error reading current task list: ${errorMessage}`,
       }],
       isError: true,
     };
