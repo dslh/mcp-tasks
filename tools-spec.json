@@ -1,0 +1,114 @@
+{
+  "tools": [
+    {
+      "name": "add_task",
+      "description": "Add a new task to the backlog, current week, or next week",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_text": {
+            "type": "string",
+            "description": "The main text/title of the task"
+          },
+          "target": {
+            "type": "string",
+            "enum": ["backlog", "current_week", "next_week"],
+            "description": "Where to add the task"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional additional details about the task"
+          }
+        },
+        "required": ["task_text", "target"]
+      }
+    },
+    {
+      "name": "edit_task",
+      "description": "Modify an existing task's text or description using substring matching",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_identifier": {
+            "type": "string",
+            "description": "Text to match against existing tasks (case-insensitive substring match)"
+          },
+          "new_text": {
+            "type": "string",
+            "description": "Updated task text (optional)"
+          },
+          "new_description": {
+            "type": "string",
+            "description": "Updated task description (optional)"
+          }
+        },
+        "required": ["task_identifier"]
+      }
+    },
+    {
+      "name": "move_task",
+      "description": "Move a task between backlog, current week, and next week",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_identifier": {
+            "type": "string",
+            "description": "Text to match against existing tasks (case-insensitive substring match)"
+          },
+          "destination": {
+            "type": "string",
+            "enum": ["backlog", "current_week", "next_week"],
+            "description": "Where to move the task"
+          }
+        },
+        "required": ["task_identifier", "destination"]
+      }
+    },
+    {
+      "name": "finish_task",
+      "description": "Mark a task as completed (x) or closed/abandoned (-)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_identifier": {
+            "type": "string",
+            "description": "Text to match against existing tasks (case-insensitive substring match)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["completed", "closed"],
+            "description": "Mark as completed (x) or closed/abandoned (-)"
+          }
+        },
+        "required": ["task_identifier", "status"]
+      }
+    },
+    {
+      "name": "get_current_tasks",
+      "description": "Retrieve the entire current.md file containing last week, this week, and next week sections",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "get_backlog",
+      "description": "Retrieve the entire backlog.md file containing future tasks with creation dates",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "start_week",
+      "description": "Execute the weekly transition: archive last week, move current to last, next to current, with git commits",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ]
+}
