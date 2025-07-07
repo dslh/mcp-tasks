@@ -181,6 +181,12 @@ For commands that require a `task_identifier` parameter (`edit_task`, `move_task
 - Maintain consistent markdown formatting
 - Preserve existing formatting and whitespace where possible
 
+### App
+- Written in typescript. Uses the latest MCP SDK. See https://github.com/modelcontextprotocol/typescript-sdk/blob/main/README.md
+- Accepts one parameter, the working directory to use
+- On startup, creates the directory if it does not exist, initializes a git repository if none exists, creates any files that don't exist, commits any untracked changes
+- Operates over stdio transport
+
 ## Design Principles
 
 ### Simplicity
