@@ -12,7 +12,8 @@
     "lint:fix": "eslint src/**/*.ts --fix"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.15.0"
+    "@modelcontextprotocol/sdk": "1.15.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "20.19.4",

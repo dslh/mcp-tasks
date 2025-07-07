@@ -7,6 +7,7 @@ import { setWorkingDirectory } from './config.js';
 import { initializeWorkspace } from './initializeWorkspace.js';
 import * as getCurrentTasks from './tools/getCurrentTasks.js';
 import * as getTaskBacklog from './tools/getTaskBacklog.js';
+import * as addTask from './tools/addTask.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -33,6 +34,7 @@ async function main() {
   // Register tools
   server.registerTool(getCurrentTasks.name, getCurrentTasks.config, getCurrentTasks.handler);
   server.registerTool(getTaskBacklog.name, getTaskBacklog.config, getTaskBacklog.handler);
+  server.registerTool(addTask.name, addTask.config, addTask.handler);
 
   const transport = new StdioServerTransport();
 
