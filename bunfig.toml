@@ -1,0 +1,10 @@
+[install]
+# Use exact versions for reproducible builds
+exact = true
+
+[install.scopes]
+# Configure any scoped registries if needed
+
+[test]
+# Test configuration
+preload = ["./test/setup.ts"] 
