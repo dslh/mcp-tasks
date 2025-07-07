@@ -1,6 +1,6 @@
-import { spawn } from "child_process";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
+import { spawn } from 'child_process';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 
 const CURRENT_TEMPLATE = `# Last Week
 
@@ -18,18 +18,18 @@ const ARCHIVE_TEMPLATE = `# Archive
 async function execCommand(command: string, args: string[], cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
-    
+
     let stdout = '';
     let stderr = '';
-    
+
     child.stdout.on('data', (data) => {
       stdout += data.toString();
     });
-    
+
     child.stderr.on('data', (data) => {
       stderr += data.toString();
     });
-    
+
     child.on('close', (code) => {
       if (code === 0) {
         resolve(stdout);
@@ -43,6 +43,7 @@ async function execCommand(command: string, args: string[], cwd: string): Promis
 async function isGitRepo(workingDir: string): Promise<boolean> {
   try {
     await execCommand('git', ['rev-parse', '--git-dir'], workingDir);
+
     return true;
   } catch {
     return false;
@@ -58,6 +59,7 @@ async function initGitRepo(workingDir: string): Promise<void> {
 async function hasUntrackedFiles(workingDir: string): Promise<boolean> {
   try {
     const output = await execCommand('git', ['status', '--porcelain'], workingDir);
+
     return output.trim().length > 0;
   } catch {
     return false;
@@ -84,11 +86,12 @@ export async function initializeWorkspace(workingDir: string): Promise<void> {
   const files = [
     { name: 'current.md', template: CURRENT_TEMPLATE },
     { name: 'backlog.md', template: BACKLOG_TEMPLATE },
-    { name: 'archive.md', template: ARCHIVE_TEMPLATE }
+    { name: 'archive.md', template: ARCHIVE_TEMPLATE },
   ];
 
   for (const file of files) {
     const filePath = join(workingDir, file.name);
+
     if (!existsSync(filePath)) {
       writeFileSync(filePath, file.template);
     }
@@ -96,6 +99,6 @@ export async function initializeWorkspace(workingDir: string): Promise<void> {
 
   // Commit any untracked changes
   if (await hasUntrackedFiles(workingDir)) {
-    await commitChanges(workingDir, 'Initial setup of task management files');
+    await commitChanges(workingDir, 'Changes since last startup');
   }
 }
