@@ -3,9 +3,10 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { setWorkingDirectory } from './config.js';
 import { initializeWorkspace } from './initializeWorkspace.js';
+import * as getCurrentTasks from './tools/getCurrentTasks.js';
+import * as getTaskBacklog from './tools/getTaskBacklog.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -17,79 +18,21 @@ async function main() {
     process.exit(1);
   }
 
+  // Set working directory for tools to use
+  setWorkingDirectory(workingDir);
+
   // Initialize the workspace
   await initializeWorkspace(workingDir);
 
   const server = new McpServer({
     name: 'mcp-tasks',
+    title: 'Weekly Task Tracker',
     version: '1.0.0',
   });
 
-  // Register get_current_tasks tool
-  server.registerTool(
-    'get_current_tasks',
-    {
-      title: 'Get Current Tasks',
-      description: 'Retrieve the entire current.md file contents',
-      inputSchema: {},
-    },
-    () => {
-      try {
-        const filePath = join(workingDir, 'current.md');
-        const content = readFileSync(filePath, 'utf-8');
-
-        return {
-          content: [{
-            type: 'text',
-            text: content,
-          }],
-        };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-        return {
-          content: [{
-            type: 'text',
-            text: `Error reading current.md: ${errorMessage}`,
-          }],
-          isError: true,
-        };
-      }
-    },
-  );
-
-  // Register get_task_backlog tool
-  server.registerTool(
-    'get_task_backlog',
-    {
-      title: 'Get Task Backlog',
-      description: 'Retrieve the entire backlog.md file contents',
-      inputSchema: {},
-    },
-    () => {
-      try {
-        const filePath = join(workingDir, 'backlog.md');
-        const content = readFileSync(filePath, 'utf-8');
-
-        return {
-          content: [{
-            type: 'text',
-            text: content,
-          }],
-        };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-        return {
-          content: [{
-            type: 'text',
-            text: `Error reading backlog.md: ${errorMessage}`,
-          }],
-          isError: true,
-        };
-      }
-    },
-  );
+  // Register tools
+  server.registerTool(getCurrentTasks.name, getCurrentTasks.config, getCurrentTasks.handler);
+  server.registerTool(getTaskBacklog.name, getTaskBacklog.config, getTaskBacklog.handler);
 
   const transport = new StdioServerTransport();
 
