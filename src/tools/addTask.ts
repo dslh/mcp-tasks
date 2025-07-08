@@ -49,7 +49,7 @@ function addTaskToFile(
   sectionTitle: string,
   taskText: string,
   description?: string,
-): Promise<void> {
+): void {
   const currentContent = readFileSync(filePath, 'utf-8');
   const updatedContent = addTaskToSection(currentContent, sectionTitle, taskText, description);
 
@@ -68,7 +68,7 @@ export async function handler({
   try {
     const taskTarget = determineTaskTarget(target, task_text);
 
-    await addTaskToFile(
+    addTaskToFile(
       taskTarget.filePath,
       taskTarget.sectionTitle,
       taskTarget.taskText,

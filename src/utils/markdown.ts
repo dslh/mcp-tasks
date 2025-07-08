@@ -59,7 +59,7 @@ export function addTaskToSection(
   // Create the new task lines
   const taskLines = [`- [ ] ${taskText}`];
 
-  if (description !== null) {
+  if (description !== undefined && description !== '') {
     const descriptionLines = description.split('\n').map((line: string) => `  ${line}`);
 
     taskLines.push(...descriptionLines);
@@ -85,6 +85,31 @@ export function addTaskToSection(
   ];
 
   return newLines.join('\n');
+}
+
+export function updateTaskStatus(
+  content: string,
+  lineNumber: number,
+  newStatus: 'completed' | 'closed',
+): string {
+  const lines = content.split('\n');
+  const targetLine = lines[lineNumber - 1]; // Convert to 0-based index
+
+  if (!targetLine) {
+    throw new Error(`Line ${lineNumber} not found in content`);
+  }
+
+  // Replace the status in the checkbox
+  const statusChar = newStatus === 'completed' ? 'x' : '-';
+  const updatedLine = targetLine.replace(/^- \[[ x-]\]/, `- [${statusChar}]`);
+
+  if (updatedLine === targetLine) {
+    throw new Error(`No task found at line ${lineNumber}`);
+  }
+
+  lines[lineNumber - 1] = updatedLine;
+
+  return lines.join('\n');
 }
 
 export function getCurrentDate(): string {

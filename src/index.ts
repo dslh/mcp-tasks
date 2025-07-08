@@ -8,6 +8,7 @@ import { initializeWorkspace } from './initializeWorkspace.js';
 import * as getCurrentTasks from './tools/getCurrentTasks.js';
 import * as getTaskBacklog from './tools/getTaskBacklog.js';
 import * as addTask from './tools/addTask.js';
+import * as finishTask from './tools/finishTask.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -35,6 +36,7 @@ async function main() {
   server.registerTool(getCurrentTasks.name, getCurrentTasks.config, getCurrentTasks.handler);
   server.registerTool(getTaskBacklog.name, getTaskBacklog.config, getTaskBacklog.handler);
   server.registerTool(addTask.name, addTask.config, addTask.handler);
+  server.registerTool(finishTask.name, finishTask.config, finishTask.handler);
 
   const transport = new StdioServerTransport();
 
