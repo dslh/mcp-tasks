@@ -1,7 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
 import { z } from 'zod';
-import { getWorkingDirectory } from '../config.js';
+import { getFilePath } from '../config.js';
 import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier.js';
 import { updateTaskStatus } from '../utils/markdown.js';
 import { commitChanges } from '../utils/git.js';
@@ -16,14 +15,6 @@ export const config = {
     status: z.enum(['completed', 'closed']).describe('Mark as completed (x) or closed (-)'),
   },
 };
-
-function getFilePath(fileName: 'current' | 'backlog'): string {
-  const workingDir = getWorkingDirectory();
-
-  return fileName === 'current'
-    ? join(workingDir, 'current.md')
-    : join(workingDir, 'backlog.md');
-}
 
 function updateTaskInFile(
   fileName: 'current' | 'backlog',

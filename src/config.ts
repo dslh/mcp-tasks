@@ -1,3 +1,5 @@
+import { join } from 'path';
+
 let workingDirectory: string | null = null;
 
 export function setWorkingDirectory(dir: string): void {
@@ -10,4 +12,19 @@ export function getWorkingDirectory(): string {
   }
 
   return workingDirectory;
+}
+
+export function getFilePath(fileName: 'current' | 'backlog' | 'archive'): string {
+  const workingDir = getWorkingDirectory();
+
+  switch (fileName) {
+    case 'current':
+      return join(workingDir, 'current.md');
+    case 'backlog':
+      return join(workingDir, 'backlog.md');
+    case 'archive':
+      return join(workingDir, 'archive.md');
+    default:
+      throw new Error(`Unknown file: ${fileName}`);
+  }
 }

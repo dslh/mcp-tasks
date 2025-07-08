@@ -1,6 +1,5 @@
 import { readFileSync } from 'fs';
-import { join } from 'path';
-import { getWorkingDirectory } from '../config.js';
+import { getFilePath } from '../config.js';
 import { parseMarkdownSections } from './markdown.js';
 
 export interface TaskMatch {
@@ -57,9 +56,8 @@ function findTasksInFile(filePath: string, fileName: 'current' | 'backlog'): Tas
 }
 
 export function findAllTasks(): TaskMatch[] {
-  const workingDir = getWorkingDirectory();
-  const currentPath = join(workingDir, 'current.md');
-  const backlogPath = join(workingDir, 'backlog.md');
+  const currentPath = getFilePath('current');
+  const backlogPath = getFilePath('backlog');
 
   const currentTasks = findTasksInFile(currentPath, 'current');
   const backlogTasks = findTasksInFile(backlogPath, 'backlog');

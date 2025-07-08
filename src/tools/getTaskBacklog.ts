@@ -1,6 +1,5 @@
 import { readFileSync } from 'fs';
-import { join } from 'path';
-import { getWorkingDirectory } from '../config.js';
+import { getFilePath } from '../config.js';
 
 export const name = 'get_task_backlog';
 
@@ -12,8 +11,7 @@ export const config = {
 
 export function handler() {
   try {
-    const workingDir = getWorkingDirectory();
-    const filePath = join(workingDir, 'backlog.md');
+    const filePath = getFilePath('backlog');
     const content = readFileSync(filePath, 'utf-8');
 
     return {

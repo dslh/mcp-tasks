@@ -1,7 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
 import { z } from 'zod';
-import { getWorkingDirectory } from '../config.js';
+import { getFilePath } from '../config.js';
 import { addTaskToSection, getCurrentDate } from '../utils/markdown.js';
 import { commitChanges } from '../utils/git.js';
 
@@ -27,18 +26,16 @@ function determineTaskTarget(
   target: 'backlog' | 'current_week' | 'next_week',
   taskText: string,
 ): TaskTarget {
-  const workingDir = getWorkingDirectory();
-
   if (target === 'backlog') {
     return {
-      filePath: join(workingDir, 'backlog.md'),
+      filePath: getFilePath('backlog'),
       sectionTitle: 'Backlog',
       taskText: `${taskText} added on ${getCurrentDate()}`,
     };
   }
 
   return {
-    filePath: join(workingDir, 'current.md'),
+    filePath: getFilePath('current'),
     sectionTitle: target === 'current_week' ? 'This Week' : 'Next Week',
     taskText,
   };

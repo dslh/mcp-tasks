@@ -1,6 +1,5 @@
 import { readFileSync } from 'fs';
-import { join } from 'path';
-import { getWorkingDirectory } from '../config.js';
+import { getFilePath } from '../config.js';
 
 export const name = 'get_current_tasks';
 
@@ -12,8 +11,7 @@ export const config = {
 
 export function handler() {
   try {
-    const workingDir = getWorkingDirectory();
-    const filePath = join(workingDir, 'current.md');
+    const filePath = getFilePath('current');
     const content = readFileSync(filePath, 'utf-8');
 
     return {
