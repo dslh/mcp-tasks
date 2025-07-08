@@ -59,8 +59,8 @@ export function addTaskToSection(
   // Create the new task lines
   const taskLines = [`- [ ] ${taskText}`];
 
-  if (description === null) {
-    const descriptionLines = description.split('\n').map(line => `  ${line}`);
+  if (description !== null) {
+    const descriptionLines = description.split('\n').map((line: string) => `  ${line}`);
 
     taskLines.push(...descriptionLines);
   }

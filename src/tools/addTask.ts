@@ -17,6 +17,45 @@ export const config = {
   },
 };
 
+interface TaskTarget {
+  filePath: string;
+  sectionTitle: string;
+  taskText: string;
+}
+
+function determineTaskTarget(
+  target: 'backlog' | 'current_week' | 'next_week',
+  taskText: string,
+): TaskTarget {
+  const workingDir = getWorkingDirectory();
+
+  if (target === 'backlog') {
+    return {
+      filePath: join(workingDir, 'backlog.md'),
+      sectionTitle: 'Backlog',
+      taskText: `${taskText} added on ${getCurrentDate()}`,
+    };
+  }
+
+  return {
+    filePath: join(workingDir, 'current.md'),
+    sectionTitle: target === 'current_week' ? 'This Week' : 'Next Week',
+    taskText,
+  };
+}
+
+function addTaskToFile(
+  filePath: string,
+  sectionTitle: string,
+  taskText: string,
+  description?: string,
+): Promise<void> {
+  const currentContent = readFileSync(filePath, 'utf-8');
+  const updatedContent = addTaskToSection(currentContent, sectionTitle, taskText, description);
+
+  writeFileSync(filePath, updatedContent);
+}
+
 export async function handler({
   task_text,
   target,
@@ -27,46 +66,21 @@ export async function handler({
   description?: string;
 }) {
   try {
-    const workingDir = getWorkingDirectory();
+    const taskTarget = determineTaskTarget(target, task_text);
 
-    // Determine target file and section
-    let filePath: string;
-    let sectionTitle: string;
-    let taskTextWithDate = task_text;
-
-    if (target === 'backlog') {
-      filePath = join(workingDir, 'backlog.md');
-      sectionTitle = 'Backlog';
-      // Add current date to task text for backlog items
-      taskTextWithDate = `${task_text} added on ${getCurrentDate()}`;
-    } else {
-      filePath = join(workingDir, 'current.md');
-      sectionTitle = target === 'current_week' ? 'This Week' : 'Next Week';
-    }
-
-    // Read current file content
-    const currentContent = readFileSync(filePath, 'utf-8');
-
-    // Add the task to the appropriate section
-    const updatedContent = addTaskToSection(
-      currentContent,
-      sectionTitle,
-      taskTextWithDate,
+    await addTaskToFile(
+      taskTarget.filePath,
+      taskTarget.sectionTitle,
+      taskTarget.taskText,
       description,
     );
 
-    // Write the updated content back to file
-    writeFileSync(filePath, updatedContent);
-
-    // Commit the changes
-    const commitMessage = `Added task: ${task_text}`;
-
-    await commitChanges(commitMessage);
+    await commitChanges(`Added task: ${task_text}`);
 
     return {
       content: [{
         type: 'text' as const,
-        text: `Successfully added task "${task_text}" to ${sectionTitle}`,
+        text: `Successfully added task "${task_text}" to ${taskTarget.sectionTitle}`,
       }],
     };
   } catch (error) {
