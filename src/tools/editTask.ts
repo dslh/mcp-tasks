@@ -1,9 +1,8 @@
-import { readFileSync, writeFileSync } from 'fs';
 import { z } from 'zod';
-import { getFilePath } from '../config.js';
 import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier.js';
 import { updateTaskText, updateTaskDescription, getCurrentDate } from '../utils/markdown.js';
 import { commitChanges } from '../utils/git.js';
+import { changeFile } from '../utils/fileOperations.js';
 
 export const name = 'edit_task';
 
@@ -43,28 +42,29 @@ function updateTaskInFile(
   newText?: string,
   newDescription?: string,
 ): void {
-  const filePath = getFilePath(fileName);
-  let content = readFileSync(filePath, 'utf-8');
+  changeFile(fileName, (content) => {
+    let updatedContent = content;
 
-  // Update task text if provided
-  if (newText !== undefined && newText !== '') {
-    const finalText = fileName === 'backlog'
-      ? updateBacklogTaskText(task.taskText, newText)
-      : newText;
+    // Update task text if provided
+    if (newText !== undefined && newText !== '') {
+      const finalText = fileName === 'backlog'
+        ? updateBacklogTaskText(task.taskText, newText)
+        : newText;
 
-    content = updateTaskText(content, task.lineNumber, finalText);
-  }
+      updatedContent = updateTaskText(updatedContent, task.lineNumber, finalText);
+    }
 
-  // Update description if provided (or explicitly cleared)
-  if (newDescription !== undefined) {
-    content = updateTaskDescription(
-      content,
-      task.lineNumber,
-      newDescription || null,
-    );
-  }
+    // Update description if provided (or explicitly cleared)
+    if (newDescription !== undefined) {
+      updatedContent = updateTaskDescription(
+        updatedContent,
+        task.lineNumber,
+        newDescription || null,
+      );
+    }
 
-  writeFileSync(filePath, content);
+    return updatedContent;
+  });
 }
 
 function formatUpdateMessage(newText?: string, newDescription?: string): string {

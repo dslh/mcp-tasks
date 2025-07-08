@@ -1,8 +1,7 @@
-import { readFileSync, writeFileSync } from 'fs';
 import { z } from 'zod';
-import { getFilePath } from '../config.js';
-import { addTaskToSection, getCurrentDate } from '../utils/markdown.js';
+import { getCurrentDate } from '../utils/markdown.js';
 import { commitChanges } from '../utils/git.js';
+import { addTaskToFile } from '../utils/fileOperations.js';
 
 export const name = 'add_task';
 
@@ -17,7 +16,7 @@ export const config = {
 };
 
 interface TaskTarget {
-  filePath: string;
+  fileName: 'current' | 'backlog';
   sectionTitle: string;
   taskText: string;
 }
@@ -28,29 +27,17 @@ function determineTaskTarget(
 ): TaskTarget {
   if (target === 'backlog') {
     return {
-      filePath: getFilePath('backlog'),
+      fileName: 'backlog',
       sectionTitle: 'Backlog',
       taskText: `${taskText} added on ${getCurrentDate()}`,
     };
   }
 
   return {
-    filePath: getFilePath('current'),
+    fileName: 'current',
     sectionTitle: target === 'current_week' ? 'This Week' : 'Next Week',
     taskText,
   };
-}
-
-function addTaskToFile(
-  filePath: string,
-  sectionTitle: string,
-  taskText: string,
-  description?: string,
-): void {
-  const currentContent = readFileSync(filePath, 'utf-8');
-  const updatedContent = addTaskToSection(currentContent, sectionTitle, taskText, description);
-
-  writeFileSync(filePath, updatedContent);
 }
 
 export async function handler({
@@ -66,7 +53,7 @@ export async function handler({
     const taskTarget = determineTaskTarget(target, task_text);
 
     addTaskToFile(
-      taskTarget.filePath,
+      taskTarget.fileName,
       taskTarget.sectionTitle,
       taskTarget.taskText,
       description,

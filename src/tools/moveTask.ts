@@ -1,9 +1,10 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { z } from 'zod';
 import { getFilePath } from '../config.js';
 import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier.js';
-import { removeTask, addTaskToSection, getCurrentDate } from '../utils/markdown.js';
+import { removeTask, getCurrentDate } from '../utils/markdown.js';
 import { commitChanges } from '../utils/git.js';
+import { addTaskToFile, changeFile } from '../utils/fileOperations.js';
 
 export const name = 'move_task';
 
@@ -98,23 +99,7 @@ function getSourceDestination(task: TaskMatch): 'backlog' | 'current_week' | 'ne
 }
 
 function removeTaskFromSource(task: TaskMatch): void {
-  const sourceFilePath = getFilePath(task.file);
-  const content = readFileSync(sourceFilePath, 'utf-8');
-  const updatedContent = removeTask(content, task.lineNumber);
-
-  writeFileSync(sourceFilePath, updatedContent);
-}
-
-function addTaskToDestination(
-  destination: MoveDestination,
-  taskText: string,
-  description?: string,
-): void {
-  const destFilePath = getFilePath(destination.file);
-  const content = readFileSync(destFilePath, 'utf-8');
-  const updatedContent = addTaskToSection(content, destination.section, taskText, description);
-
-  writeFileSync(destFilePath, updatedContent);
+  changeFile(task.file, (content) => removeTask(content, task.lineNumber));
 }
 
 function checkTaskAlreadyAtDestination(
@@ -143,7 +128,7 @@ async function performTaskMove(
   removeTaskFromSource(task);
 
   // Add to destination
-  addTaskToDestination(destinationInfo, transformedText, description);
+  addTaskToFile(destinationInfo.file, destinationInfo.section, transformedText, description);
 
   const sourceLocation = sourceDestination.replace('_', ' ');
   const destLocation = destination.replace('_', ' ');
