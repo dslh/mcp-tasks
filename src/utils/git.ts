@@ -26,6 +26,37 @@ async function execCommand(command: string, args: string[], cwd: string): Promis
   });
 }
 
+export async function isGitRepo(): Promise<boolean> {
+  try {
+    const workingDir = getWorkingDirectory();
+
+    await execCommand('git', ['rev-parse', '--git-dir'], workingDir);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function initGitRepo(): Promise<void> {
+  const workingDir = getWorkingDirectory();
+
+  await execCommand('git', ['init'], workingDir);
+  await execCommand('git', ['config', 'user.email', 'mcp-tasks@example.com'], workingDir);
+  await execCommand('git', ['config', 'user.name', 'MCP Tasks Server'], workingDir);
+}
+
+export async function hasUntrackedFiles(): Promise<boolean> {
+  try {
+    const workingDir = getWorkingDirectory();
+    const output = await execCommand('git', ['status', '--porcelain'], workingDir);
+
+    return output.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function commitChanges(message: string): Promise<void> {
   const workingDir = getWorkingDirectory();
 

@@ -4,7 +4,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { setWorkingDirectory } from './config.js';
-import { initializeWorkspace } from './initializeWorkspace.js';
+import { initializeWorkspace } from './utils/initializeWorkspace.js';
 import * as getCurrentTasks from './tools/getCurrentTasks.js';
 import * as getTaskBacklog from './tools/getTaskBacklog.js';
 import * as addTask from './tools/addTask.js';
@@ -26,7 +26,7 @@ async function main() {
   setWorkingDirectory(workingDir);
 
   // Initialize the workspace
-  await initializeWorkspace(workingDir);
+  await initializeWorkspace();
 
   const server = new McpServer({
     name: 'mcp-tasks',
