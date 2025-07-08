@@ -1,29 +1,24 @@
 import { parseMarkdownSections } from '../utils/markdown.js';
-import { readFile, changeFile } from '../utils/fileOperations.js';
+import { readFile, changeFile, appendToFile } from '../utils/fileOperations.js';
 import { commitChanges } from '../utils/git.js';
 
 export const name = 'start_week';
 
 export const config = {
   title: 'Start Week',
-  description: 'Execute the weekly transition workflow',
+  description: 'Execute the weekly transition: archive last week, move current week to last week, next week to current week',
   inputSchema: {},
 };
 
 function getArchiveWeekDate(): string {
   const today = new Date();
-
-  // Find last Thursday
-  const lastThursday = new Date(today);
   const currentDay = today.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-  const daysToSubtract = currentDay >= 4 ? currentDay - 4 : currentDay + 3; // Days back to Thursday
+  const daysToLastThursday = currentDay >= 4 ? currentDay - 4 : currentDay + 3;
 
-  lastThursday.setDate(today.getDate() - daysToSubtract);
+  // Get Monday of the week to archive: today - daysToLastThursday - 10
+  const archiveMonday = new Date(today);
 
-  // Subtract 10 days to get Monday of the week to archive
-  const archiveMonday = new Date(lastThursday);
-
-  archiveMonday.setDate(lastThursday.getDate() - 10);
+  archiveMonday.setDate(today.getDate() - daysToLastThursday - 10);
 
   // Format as YYYY-MM-DD
   const year = archiveMonday.getFullYear();
@@ -81,30 +76,9 @@ function filterTasksByCompletion(sectionContent: string[]): { finished: string[]
 
 function addWeekToArchive(archiveDate: string, lastWeekContent: string[]): void {
   const sectionTitle = `Week of ${archiveDate}`;
+  const newSection = [`# ${sectionTitle}`, ...lastWeekContent].join('\n');
 
-  changeFile('archive', (content) => {
-    const sections = parseMarkdownSections(content);
-
-    // Create new section content
-    const newSectionLines = [`# ${sectionTitle}`, ...lastWeekContent, ''];
-
-    // If archive is empty or only has header, add as first section
-    if (sections.length === 0) {
-      return newSectionLines.join('\n');
-    }
-
-    // Add the new section at the top (most recent first)
-    const lines = content.split('\n');
-    const firstSectionStart = sections[0].startLine;
-
-    const newContent = [
-      ...lines.slice(0, firstSectionStart),
-      ...newSectionLines,
-      ...lines.slice(firstSectionStart),
-    ];
-
-    return newContent.join('\n');
-  });
+  appendToFile('archive', newSection);
 }
 
 function rebuildCurrentFile(

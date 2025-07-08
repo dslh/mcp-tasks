@@ -22,6 +22,17 @@ export function changeFile(
   writeFileSync(filePath, updatedContent);
 }
 
+export function appendToFile(
+  fileName: 'current' | 'backlog' | 'archive',
+  content: string,
+): void {
+  changeFile(fileName, (existingContent) => {
+    const trimmed = existingContent.trim();
+
+    return trimmed ? `${trimmed}\n\n${content}` : content;
+  });
+}
+
 export function addTaskToFile(
   fileName: 'current' | 'backlog' | 'archive',
   sectionTitle: string,
