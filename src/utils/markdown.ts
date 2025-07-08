@@ -183,6 +183,44 @@ export function updateTaskDescription(
   return newLines.join('\n');
 }
 
+export function removeTask(content: string, lineNumber: number): string {
+  const lines = content.split('\n');
+  const taskLine = lines[lineNumber - 1]; // Convert to 0-based index
+
+  if (!taskLine) {
+    throw new Error(`Line ${lineNumber} not found in content`);
+  }
+
+  // Verify it's actually a task line
+  if (!taskLine.match(/^- \[[ x-]\] /)) {
+    throw new Error(`No task found at line ${lineNumber}`);
+  }
+
+  // Find the extent of the task (including description lines)
+  let endLine = lineNumber - 1; // Start from task line (0-based)
+
+  // Find description lines (indented lines immediately following)
+  for (let i = lineNumber; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.startsWith('  ') && line.trim() !== '') {
+      // Indented line with content (description)
+      endLine = i;
+    } else {
+      // Hit empty line, next task, or section - stop
+      break;
+    }
+  }
+
+  // Remove the task and its description lines
+  const newLines = [
+    ...lines.slice(0, lineNumber - 1), // Everything before task (0-based)
+    ...lines.slice(endLine + 1), // Everything after task and description
+  ];
+
+  return newLines.join('\n');
+}
+
 export function getCurrentDate(): string {
   const now = new Date();
 
