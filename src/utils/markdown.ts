@@ -10,10 +10,12 @@ export function parseMarkdownSections(content: string): TaskSection[] {
   const sections: TaskSection[] = [];
   let currentSection: TaskSection | null = null;
 
-  lines.forEach((line, index) => {
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+
     if (line.startsWith('# ')) {
       // Save previous section if it exists
-      if (currentSection) {
+      if (currentSection !== null) {
         currentSection.endLine = index - 1;
         sections.push(currentSection);
       }
@@ -25,13 +27,13 @@ export function parseMarkdownSections(content: string): TaskSection[] {
         startLine: index,
         endLine: -1,
       };
-    } else if (currentSection) {
+    } else if (currentSection !== null) {
       currentSection.content.push(line);
     }
-  });
+  }
 
   // Add the last section
-  if (currentSection) {
+  if (currentSection !== null) {
     currentSection.endLine = lines.length - 1;
     sections.push(currentSection);
   }
@@ -46,7 +48,7 @@ export function addTaskToSection(
   description?: string,
 ): string {
   const sections = parseMarkdownSections(content);
-  const targetSection = sections.find(section => 
+  const targetSection = sections.find(section =>
     section.title.toLowerCase() === sectionTitle.toLowerCase(),
   );
 
@@ -56,21 +58,24 @@ export function addTaskToSection(
 
   // Create the new task lines
   const taskLines = [`- [ ] ${taskText}`];
-  if (description) {
+
+  if (description === null) {
     const descriptionLines = description.split('\n').map(line => `  ${line}`);
+
     taskLines.push(...descriptionLines);
   }
 
   // Add task to the end of the section content
   const updatedContent = [...targetSection.content];
-  
+
   // Remove any trailing empty lines and add the task
   while (updatedContent.length > 0 && updatedContent[updatedContent.length - 1].trim() === '') {
     updatedContent.pop();
   }
-  
-  updatedContent.push('', ...taskLines);
-  
+
+  // Add task lines with one empty line at the end
+  updatedContent.push(...taskLines, '');
+
   // Rebuild the full content
   const lines = content.split('\n');
   const newLines = [
@@ -84,6 +89,6 @@ export function addTaskToSection(
 
 export function getCurrentDate(): string {
   const now = new Date();
-  
+
   return now.toISOString().split('T')[0];
 }

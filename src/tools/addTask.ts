@@ -17,9 +17,9 @@ export const config = {
   },
 };
 
-export async function handler({ 
-  task_text, 
-  target, 
+export async function handler({
+  task_text,
+  target,
   description,
 }: {
   task_text: string;
@@ -28,7 +28,7 @@ export async function handler({
 }) {
   try {
     const workingDir = getWorkingDirectory();
-    
+
     // Determine target file and section
     let filePath: string;
     let sectionTitle: string;
@@ -46,7 +46,7 @@ export async function handler({
 
     // Read current file content
     const currentContent = readFileSync(filePath, 'utf-8');
-    
+
     // Add the task to the appropriate section
     const updatedContent = addTaskToSection(
       currentContent,
@@ -54,14 +54,15 @@ export async function handler({
       taskTextWithDate,
       description,
     );
-    
+
     // Write the updated content back to file
     writeFileSync(filePath, updatedContent);
-    
+
     // Commit the changes
     const commitMessage = `Added task: ${task_text}`;
+
     await commitChanges(commitMessage);
-    
+
     return {
       content: [{
         type: 'text' as const,
