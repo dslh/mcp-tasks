@@ -11,6 +11,7 @@ import * as addTask from './tools/addTask.js';
 import * as finishTask from './tools/finishTask.js';
 import * as editTask from './tools/editTask.js';
 import * as moveTask from './tools/moveTask.js';
+import * as startWeek from './tools/startWeek.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -41,6 +42,7 @@ async function main() {
   server.registerTool(finishTask.name, finishTask.config, finishTask.handler);
   server.registerTool(editTask.name, editTask.config, editTask.handler);
   server.registerTool(moveTask.name, moveTask.config, moveTask.handler);
+  server.registerTool(startWeek.name, startWeek.config, startWeek.handler);
 
   const transport = new StdioServerTransport();
 
