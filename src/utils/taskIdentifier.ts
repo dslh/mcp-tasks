@@ -1,6 +1,5 @@
-import { readFileSync } from 'fs';
-import { getFilePath } from '../config.js';
 import { parseMarkdownSections } from './markdown.js';
+import { readFile } from './fileOperations.js';
 
 export interface TaskMatch {
   file: 'current' | 'backlog';
@@ -27,8 +26,8 @@ function parseTaskLine(line: string): { taskText: string; isCompleted: boolean; 
   };
 }
 
-function findTasksInFile(filePath: string, fileName: 'current' | 'backlog'): TaskMatch[] {
-  const content = readFileSync(filePath, 'utf-8');
+function findTasksInFile(fileName: 'current' | 'backlog'): TaskMatch[] {
+  const content = readFile(fileName);
   const sections = parseMarkdownSections(content);
   const tasks: TaskMatch[] = [];
 
@@ -56,11 +55,8 @@ function findTasksInFile(filePath: string, fileName: 'current' | 'backlog'): Tas
 }
 
 export function findAllTasks(): TaskMatch[] {
-  const currentPath = getFilePath('current');
-  const backlogPath = getFilePath('backlog');
-
-  const currentTasks = findTasksInFile(currentPath, 'current');
-  const backlogTasks = findTasksInFile(backlogPath, 'backlog');
+  const currentTasks = findTasksInFile('current');
+  const backlogTasks = findTasksInFile('backlog');
 
   return [...currentTasks, ...backlogTasks];
 }

@@ -1,5 +1,4 @@
-import { readFileSync } from 'fs';
-import { getFilePath } from '../config.js';
+import { readFile } from '../utils/fileOperations.js';
 
 export const name = 'get_current_tasks';
 
@@ -11,8 +10,7 @@ export const config = {
 
 export function handler() {
   try {
-    const filePath = getFilePath('current');
-    const content = readFileSync(filePath, 'utf-8');
+    const content = readFile('current');
 
     return {
       content: [{

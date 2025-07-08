@@ -5,6 +5,12 @@ import { addTaskToSection } from './markdown.js';
 // eslint-disable-next-line no-unused-vars
 type ContentModifier = (content: string) => string;
 
+export function readFile(fileName: 'current' | 'backlog' | 'archive'): string {
+  const filePath = getFilePath(fileName);
+
+  return readFileSync(filePath, 'utf-8');
+}
+
 export function changeFile(
   fileName: 'current' | 'backlog' | 'archive',
   modifier: ContentModifier,

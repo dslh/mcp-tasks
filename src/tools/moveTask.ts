@@ -1,10 +1,8 @@
-import { readFileSync } from 'fs';
 import { z } from 'zod';
-import { getFilePath } from '../config.js';
 import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier.js';
 import { removeTask, getCurrentDate } from '../utils/markdown.js';
 import { commitChanges } from '../utils/git.js';
-import { addTaskToFile, changeFile } from '../utils/fileOperations.js';
+import { addTaskToFile, changeFile, readFile } from '../utils/fileOperations.js';
 
 export const name = 'move_task';
 
@@ -37,8 +35,7 @@ function getDestinationInfo(destination: 'backlog' | 'current_week' | 'next_week
 
 function extractTaskDescription(task: TaskMatch): string | undefined {
   // We need to read the source file and extract any description
-  const sourceFilePath = getFilePath(task.file);
-  const content = readFileSync(sourceFilePath, 'utf-8');
+  const content = readFile(task.file);
   const lines = content.split('\n');
 
   const descriptionLines: string[] = [];

@@ -1,9 +1,8 @@
-import { readFileSync, writeFileSync } from 'fs';
 import { z } from 'zod';
-import { getFilePath } from '../config.js';
 import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier.js';
 import { updateTaskStatus } from '../utils/markdown.js';
 import { commitChanges } from '../utils/git.js';
+import { changeFile } from '../utils/fileOperations.js';
 
 export const name = 'finish_task';
 
@@ -21,11 +20,7 @@ function updateTaskInFile(
   lineNumber: number,
   status: 'completed' | 'closed',
 ): void {
-  const filePath = getFilePath(fileName);
-  const content = readFileSync(filePath, 'utf-8');
-  const updatedContent = updateTaskStatus(content, lineNumber, status);
-
-  writeFileSync(filePath, updatedContent);
+  changeFile(fileName, (content) => updateTaskStatus(content, lineNumber, status));
 }
 
 function checkTaskAlreadyInState(
