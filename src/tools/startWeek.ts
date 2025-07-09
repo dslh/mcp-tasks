@@ -1,4 +1,4 @@
-import { parseMarkdownSections } from '../utils/markdown.js';
+import { parseMarkdownSections, getTaskDescriptionLines } from '../utils/markdown.js';
 import { readFile, changeFile, appendToFile } from '../utils/fileOperations.js';
 import { commitChanges } from '../utils/git.js';
 
@@ -44,18 +44,10 @@ function filterTasksByCompletion(sectionContent: string[]): { finished: string[]
 
       // Collect this task and any description lines that follow
       const taskLines = [line];
+      const descriptionLines = getTaskDescriptionLines(sectionContent, i + 1);
 
-      // Look for description lines (indented lines immediately following)
-      for (let j = i + 1; j < sectionContent.length; j++) {
-        const nextLine = sectionContent[j];
-
-        if (nextLine.startsWith('  ') && nextLine.trim() !== '') {
-          taskLines.push(nextLine);
-          i = j; // Skip these lines in the main loop
-        } else {
-          break;
-        }
-      }
+      taskLines.push(...descriptionLines);
+      i += descriptionLines.length; // Skip these lines in the main loop
 
       if (isFinished) {
         finished.push(...taskLines);

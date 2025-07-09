@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier.js';
-import { removeTask, getCurrentDate } from '../utils/markdown.js';
+import { removeTask, getCurrentDate, getTaskDescriptionLines } from '../utils/markdown.js';
 import { commitChanges } from '../utils/git.js';
 import { addTaskToFile, changeFile, readFile } from '../utils/fileOperations.js';
 
@@ -38,22 +38,15 @@ function extractTaskDescription(task: TaskMatch): string | undefined {
   const content = readFile(task.file);
   const lines = content.split('\n');
 
-  const descriptionLines: string[] = [];
-
   // Look for description lines after the task line
-  for (let i = task.lineNumber; i < lines.length; i++) {
-    const line = lines[i];
+  const descriptionLines = getTaskDescriptionLines(lines, task.lineNumber);
 
-    if (line.startsWith('  ') && line.trim() !== '') {
-      // Remove the indentation to get the original description text
-      descriptionLines.push(line.substring(2));
-    } else {
-      // Hit empty line, next task, or section - stop
-      break;
-    }
+  if (descriptionLines.length === 0) {
+    return undefined;
   }
 
-  return descriptionLines.length > 0 ? descriptionLines.join('\n') : undefined;
+  // Remove the indentation to get the original description text
+  return descriptionLines.map(line => line.substring(2)).join('\n');
 }
 
 function transformTaskText(

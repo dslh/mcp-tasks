@@ -151,21 +151,9 @@ export function updateTaskDescription(
     throw new Error(`Line ${taskLineNumber} not found in content`);
   }
 
-  // Find description lines (only indented lines, not empty lines)
-  let endLine = taskLineNumber - 1; // Start from task line (0-based)
-
-  // Find description lines (indented lines immediately following)
-  for (let i = taskLineNumber; i < lines.length; i++) {
-    const line = lines[i];
-
-    if (line.startsWith('  ') && line.trim() !== '') {
-      // Indented line with content (description)
-      endLine = i;
-    } else {
-      // Hit empty line, next task, or section - stop
-      break;
-    }
-  }
+  // Find description lines using helper function
+  const descriptionLines = getTaskDescriptionLines(lines, taskLineNumber);
+  const endLine = taskLineNumber - 1 + descriptionLines.length;
 
   // Remove old description lines (everything after the task line up to endLine)
   const newLines = [
@@ -197,20 +185,8 @@ export function removeTask(content: string, lineNumber: number): string {
   }
 
   // Find the extent of the task (including description lines)
-  let endLine = lineNumber - 1; // Start from task line (0-based)
-
-  // Find description lines (indented lines immediately following)
-  for (let i = lineNumber; i < lines.length; i++) {
-    const line = lines[i];
-
-    if (line.startsWith('  ') && line.trim() !== '') {
-      // Indented line with content (description)
-      endLine = i;
-    } else {
-      // Hit empty line, next task, or section - stop
-      break;
-    }
-  }
+  const descriptionLines = getTaskDescriptionLines(lines, lineNumber);
+  const endLine = lineNumber - 1 + descriptionLines.length;
 
   // Remove the task and its description lines
   const newLines = [
@@ -219,6 +195,22 @@ export function removeTask(content: string, lineNumber: number): string {
   ];
 
   return newLines.join('\n');
+}
+
+export function getTaskDescriptionLines(lines: string[], startIndex: number): string[] {
+  const descriptionLines: string[] = [];
+
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.startsWith('  ') && line.trim() !== '') {
+      descriptionLines.push(line);
+    } else {
+      break;
+    }
+  }
+
+  return descriptionLines;
 }
 
 export function getCurrentDate(): string {
