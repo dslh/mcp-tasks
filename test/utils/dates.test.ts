@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
-import { getCurrentDate, getArchiveWeekDate } from '../../src/utils/dates';
+import { getCurrentDate, getArchiveWeekDate } from 'src/utils/dates';
 
 describe('dates utilities', () => {
   describe('getCurrentDate', () => {
