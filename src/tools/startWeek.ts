@@ -1,7 +1,7 @@
-import { parseMarkdownSections, getTaskDescriptionLines } from '../utils/markdown.js';
-import { readFile, changeFile, appendToFile } from '../utils/fileOperations.js';
-import { commitChanges } from '../utils/git.js';
-import { getCurrentDate, getArchiveWeekDate } from '../utils/dates.js';
+import { parseMarkdownSections, getTaskDescriptionLines } from '../utils/markdown';
+import { readFile, changeFile, appendToFile } from '../utils/fileOperations';
+import { commitChanges } from '../utils/git';
+import { getCurrentDate, getArchiveWeekDate } from '../utils/dates';
 
 export const name = 'start_week';
 

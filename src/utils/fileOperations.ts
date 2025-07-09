@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { getFilePath } from '../config.js';
-import { addTaskToSection } from './markdown.js';
+import { getFilePath } from '../config';
+import { addTaskToSection } from './markdown';
 
 // eslint-disable-next-line no-unused-vars
 type ContentModifier = (content: string) => string;

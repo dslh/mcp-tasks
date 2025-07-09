@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { getCurrentDate } from '../utils/dates.js';
-import { commitChanges } from '../utils/git.js';
-import { addTaskToFile } from '../utils/fileOperations.js';
+import { getCurrentDate } from '../utils/dates';
+import { commitChanges } from '../utils/git';
+import { addTaskToFile } from '../utils/fileOperations';
 
 export const name = 'add_task';
 

@@ -1,4 +1,4 @@
-import { readFile } from '../utils/fileOperations.js';
+import { readFile } from '../utils/fileOperations';
 
 export const name = 'get_current_tasks';
 

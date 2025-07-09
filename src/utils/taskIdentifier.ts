@@ -1,5 +1,5 @@
-import { parseMarkdownSections } from './markdown.js';
-import { readFile } from './fileOperations.js';
+import { parseMarkdownSections } from './markdown';
+import { readFile } from './fileOperations';
 
 export interface TaskMatch {
   file: 'current' | 'backlog';

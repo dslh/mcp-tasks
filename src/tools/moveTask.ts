@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier.js';
-import { removeTask, getTaskDescriptionLines } from '../utils/markdown.js';
-import { getCurrentDate } from '../utils/dates.js';
-import { commitChanges } from '../utils/git.js';
-import { addTaskToFile, changeFile, readFile } from '../utils/fileOperations.js';
+import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier';
+import { removeTask, getTaskDescriptionLines } from '../utils/markdown';
+import { getCurrentDate } from '../utils/dates';
+import { commitChanges } from '../utils/git';
+import { addTaskToFile, changeFile, readFile } from '../utils/fileOperations';
 
 export const name = 'move_task';
 

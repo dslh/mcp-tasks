@@ -1,5 +1,5 @@
 import { spawn } from 'child_process';
-import { getWorkingDirectory } from '../config.js';
+import { getWorkingDirectory } from '../config';
 
 async function execCommand(command: string, args: string[], cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {

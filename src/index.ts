@@ -3,15 +3,15 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { setWorkingDirectory } from './config.js';
-import { initializeWorkspace } from './utils/initializeWorkspace.js';
-import * as getCurrentTasks from './tools/getCurrentTasks.js';
-import * as getTaskBacklog from './tools/getTaskBacklog.js';
-import * as addTask from './tools/addTask.js';
-import * as finishTask from './tools/finishTask.js';
-import * as editTask from './tools/editTask.js';
-import * as moveTask from './tools/moveTask.js';
-import * as startWeek from './tools/startWeek.js';
+import { setWorkingDirectory } from './config';
+import { initializeWorkspace } from './utils/initializeWorkspace';
+import * as getCurrentTasks from './tools/getCurrentTasks';
+import * as getTaskBacklog from './tools/getTaskBacklog';
+import * as addTask from './tools/addTask';
+import * as finishTask from './tools/finishTask';
+import * as editTask from './tools/editTask';
+import * as moveTask from './tools/moveTask';
+import * as startWeek from './tools/startWeek';
 
 async function main() {
   const args = process.argv.slice(2);
