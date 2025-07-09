@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getCurrentDate } from '../utils/markdown.js';
+import { getCurrentDate } from '../utils/dates.js';
 import { commitChanges } from '../utils/git.js';
 import { addTaskToFile } from '../utils/fileOperations.js';
 

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier.js';
-import { removeTask, getCurrentDate, getTaskDescriptionLines } from '../utils/markdown.js';
+import { removeTask, getTaskDescriptionLines } from '../utils/markdown.js';
+import { getCurrentDate } from '../utils/dates.js';
 import { commitChanges } from '../utils/git.js';
 import { addTaskToFile, changeFile, readFile } from '../utils/fileOperations.js';
 

@@ -1,6 +1,7 @@
 import { parseMarkdownSections, getTaskDescriptionLines } from '../utils/markdown.js';
 import { readFile, changeFile, appendToFile } from '../utils/fileOperations.js';
 import { commitChanges } from '../utils/git.js';
+import { getCurrentDate, getArchiveWeekDate } from '../utils/dates.js';
 
 export const name = 'start_week';
 
@@ -9,24 +10,6 @@ export const config = {
   description: 'Execute the weekly transition: archive last week, move current week to last week, next week to current week',
   inputSchema: {},
 };
-
-function getArchiveWeekDate(): string {
-  const today = new Date();
-  const currentDay = today.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-  const daysToLastThursday = currentDay >= 4 ? currentDay - 4 : currentDay + 3;
-
-  // Get Monday of the week to archive: today - daysToLastThursday - 10
-  const archiveMonday = new Date(today);
-
-  archiveMonday.setDate(today.getDate() - daysToLastThursday - 10);
-
-  // Format as YYYY-MM-DD
-  const year = archiveMonday.getFullYear();
-  const month = String(archiveMonday.getMonth() + 1).padStart(2, '0');
-  const day = String(archiveMonday.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
 
 function filterTasksByCompletion(sectionContent: string[]): { finished: string[]; unfinished: string[] } {
   const finished: string[] = [];
@@ -128,7 +111,7 @@ async function performWeekTransition(): Promise<string> {
   );
 
   // Step 6: Final commit
-  const today = new Date().toISOString().split('T')[0];
+  const today = getCurrentDate();
 
   await commitChanges(`Completed week transition to ${today}`);
 

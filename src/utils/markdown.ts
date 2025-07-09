@@ -212,9 +212,3 @@ export function getTaskDescriptionLines(lines: string[], startIndex: number): st
 
   return descriptionLines;
 }
-
-export function getCurrentDate(): string {
-  const now = new Date();
-
-  return now.toISOString().split('T')[0];
-}
