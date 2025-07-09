@@ -140,6 +140,10 @@ The system manages three markdown files:
 6. Clear "Next Week" section
 7. Create git commit with message "Completed week transition to [current date]"
 
+"Last Week" section gets moved to archive.md under the heading "Week of YYYY-MM-DD", with the date set to the Monday of that week. If a section with matching title already exists we assume the tool has already run this week, and abort.
+
+**Returns**: Full content of the current.md file
+
 ## Task Identification Strategy
 
 For commands that require a `task_identifier` parameter (`edit_task`, `move_task`, `finish_task`), the system uses case-insensitive substring matching with robust error handling.
