@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { getFilePath } from '../config';
+import { getFilePath } from 'src/config';
 import { addTaskToSection } from './markdown';
 
 // eslint-disable-next-line no-unused-vars

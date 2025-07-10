@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { getWorkingDirectory } from '../config';
+import { getWorkingDirectory } from 'src/config';
 import { isGitRepo, initGitRepo, hasUntrackedFiles, commitChanges } from './git';
 
 const CURRENT_TEMPLATE = `# Last Week

@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier';
-import { updateTaskStatus } from '../utils/markdown';
-import { commitChanges } from '../utils/git';
-import { changeFile } from '../utils/fileOperations';
+import { validateTaskMatch, type TaskMatch } from 'src/utils/taskIdentifier';
+import { updateTaskStatus } from 'src/utils/markdown';
+import { commitChanges } from 'src/utils/git';
+import { changeFile } from 'src/utils/fileOperations';
 
 export const name = 'finish_task';
 
