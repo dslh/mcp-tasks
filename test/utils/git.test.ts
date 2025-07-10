@@ -58,7 +58,7 @@ describe('git utilities', () => {
   });
 
   describe('isGitRepo', () => {
-    it('should return true when git rev-parse succeeds', async () => {
+    it('should return true when git rev-parse succeeds', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: { on: mock() },
@@ -80,11 +80,11 @@ describe('git utilities', () => {
       expect(mockSpawn).toHaveBeenCalledWith(
         'git',
         ['rev-parse', '--git-dir'],
-        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] }
+        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] },
       );
     });
 
-    it('should return false when git rev-parse fails', async () => {
+    it('should return false when git rev-parse fails', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: { on: mock() },
@@ -105,7 +105,7 @@ describe('git utilities', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when spawn throws an error', async () => {
+    it('should return false when spawn throws an error', async() => {
       mockSpawn.mockImplementationOnce(() => {
         throw new Error('Command not found');
       });
@@ -117,7 +117,7 @@ describe('git utilities', () => {
   });
 
   describe('initGitRepo', () => {
-    it('should execute git init and config commands', async () => {
+    it('should execute git init and config commands', async() => {
       let callCount = 0;
 
       mockSpawn.mockImplementation(() => {
@@ -142,23 +142,23 @@ describe('git utilities', () => {
         1,
         'git',
         ['init'],
-        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] }
+        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] },
       );
       expect(mockSpawn).toHaveBeenNthCalledWith(
         2,
         'git',
         ['config', 'user.email', 'mcp-tasks@example.com'],
-        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] }
+        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] },
       );
       expect(mockSpawn).toHaveBeenNthCalledWith(
         3,
         'git',
         ['config', 'user.name', 'MCP Tasks Server'],
-        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] }
+        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] },
       );
     });
 
-    it('should throw error when git init fails', async () => {
+    it('should throw error when git init fails', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: { on: mock() },
@@ -182,7 +182,7 @@ describe('git utilities', () => {
       await expect(initGitRepo()).rejects.toThrow('Command failed with code 1');
     });
 
-    it('should throw error when git config fails', async () => {
+    it('should throw error when git config fails', async() => {
       let callCount = 0;
 
       mockSpawn.mockImplementation(() => {
@@ -213,7 +213,7 @@ describe('git utilities', () => {
   });
 
   describe('hasUntrackedFiles', () => {
-    it('should return true when git status shows changes', async () => {
+    it('should return true when git status shows changes', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: {
@@ -240,11 +240,11 @@ describe('git utilities', () => {
       expect(mockSpawn).toHaveBeenCalledWith(
         'git',
         ['status', '--porcelain'],
-        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] }
+        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] },
       );
     });
 
-    it('should return false when git status shows no changes', async () => {
+    it('should return false when git status shows no changes', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: {
@@ -270,7 +270,7 @@ describe('git utilities', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when git status fails', async () => {
+    it('should return false when git status fails', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: { on: mock() },
@@ -290,7 +290,7 @@ describe('git utilities', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle whitespace-only output correctly', async () => {
+    it('should handle whitespace-only output correctly', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: {
@@ -318,7 +318,7 @@ describe('git utilities', () => {
   });
 
   describe('commitChanges', () => {
-    it('should execute git add and commit commands', async () => {
+    it('should execute git add and commit commands', async() => {
       let callCount = 0;
 
       mockSpawn.mockImplementation(() => {
@@ -343,17 +343,17 @@ describe('git utilities', () => {
         1,
         'git',
         ['add', '.'],
-        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] }
+        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] },
       );
       expect(mockSpawn).toHaveBeenNthCalledWith(
         2,
         'git',
         ['commit', '-m', 'Test commit message'],
-        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] }
+        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] },
       );
     });
 
-    it('should throw error when git add fails', async () => {
+    it('should throw error when git add fails', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: { on: mock() },
@@ -377,7 +377,7 @@ describe('git utilities', () => {
       await expect(commitChanges('Test message')).rejects.toThrow('Command failed with code 128');
     });
 
-    it('should throw error when git commit fails', async () => {
+    it('should throw error when git commit fails', async() => {
       let callCount = 0;
 
       mockSpawn.mockImplementation(() => {
@@ -406,7 +406,7 @@ describe('git utilities', () => {
       await expect(commitChanges('Test message')).rejects.toThrow('Command failed with code 1');
     });
 
-    it('should handle commit messages with special characters', async () => {
+    it('should handle commit messages with special characters', async() => {
       mockSpawn.mockImplementation(() => {
         const mockChild = {
           stdout: { on: mock() },
@@ -427,13 +427,13 @@ describe('git utilities', () => {
         2,
         'git',
         ['commit', '-m', 'Test: "quotes" & special chars!'],
-        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] }
+        { cwd: '/test/directory', stdio: ['pipe', 'pipe', 'pipe'] },
       );
     });
   });
 
   describe('error handling', () => {
-    it('should handle stderr data correctly', async () => {
+    it('should handle stderr data correctly', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: { on: mock() },
@@ -457,7 +457,7 @@ describe('git utilities', () => {
       await expect(isGitRepo()).resolves.toBe(false);
     });
 
-    it('should handle stdout data correctly', async () => {
+    it('should handle stdout data correctly', async() => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: {
