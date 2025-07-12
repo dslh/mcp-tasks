@@ -75,7 +75,7 @@ describe('finishTask tool', () => {
 
   describe('handler function', () => {
     describe('successful task completion', () => {
-      it('should complete an incomplete task in current file', async () => {
+      it('should complete an incomplete task in current file', async() => {
         const result = await handler({
           task_identifier: 'Incomplete task',
           status: 'completed',
@@ -103,7 +103,7 @@ describe('finishTask tool', () => {
         });
       });
 
-      it('should close an incomplete task in current file', async () => {
+      it('should close an incomplete task in current file', async() => {
         const result = await handler({
           task_identifier: 'Incomplete task',
           status: 'closed',
@@ -127,7 +127,7 @@ describe('finishTask tool', () => {
         });
       });
 
-      it('should complete a task in backlog file', async () => {
+      it('should complete a task in backlog file', async() => {
         const result = await handler({
           task_identifier: 'Backlog task added on 2024-01-01',
           status: 'completed',
@@ -147,7 +147,7 @@ describe('finishTask tool', () => {
         expect(mockCommitChanges).toHaveBeenCalledWith('Completed task: Backlog task added on 2024-01-01');
       });
 
-      it('should handle task with description', async () => {
+      it('should handle task with description', async() => {
         const result = await handler({
           task_identifier: 'Task with description',
           status: 'completed',
@@ -162,7 +162,7 @@ describe('finishTask tool', () => {
     });
 
     describe('already in requested state', () => {
-      it('should handle task already completed', async () => {
+      it('should handle task already completed', async() => {
         const result = await handler({
           task_identifier: 'Already completed task',
           status: 'completed',
@@ -185,7 +185,7 @@ describe('finishTask tool', () => {
         });
       });
 
-      it('should handle task already closed', async () => {
+      it('should handle task already closed', async() => {
         const result = await handler({
           task_identifier: 'Already closed task',
           status: 'closed',
@@ -210,7 +210,7 @@ describe('finishTask tool', () => {
     });
 
     describe('error scenarios', () => {
-      it('should handle task not found', async () => {
+      it('should handle task not found', async() => {
         const result = await handler({
           task_identifier: 'Nonexistent task',
           status: 'completed',
@@ -232,10 +232,10 @@ describe('finishTask tool', () => {
         expect(result.content[0].text).toContain('No matching tasks found for "Nonexistent task"');
       });
 
-      it('should handle ambiguous task identifier', async () => {
+      it('should handle ambiguous task identifier', async() => {
         // Add another task with similar text
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
-        const modifiedContent = currentContent + '\n- [ ] Another incomplete task\n';
+        const modifiedContent = `${currentContent  }\n- [ ] Another incomplete task\n`;
 
         writeFileSync(join(testDir, 'current.md'), modifiedContent);
 
@@ -249,7 +249,7 @@ describe('finishTask tool', () => {
         expect(result.content[0].text).toContain('Multiple matches found for "task"');
       });
 
-      it('should handle git commit failure', async () => {
+      it('should handle git commit failure', async() => {
         mockCommitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
 
         const result = await handler({
@@ -269,7 +269,7 @@ describe('finishTask tool', () => {
     });
 
     describe('file preservation', () => {
-      it('should preserve file structure and other content', async () => {
+      it('should preserve file structure and other content', async() => {
         const originalContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
 
         await handler({
@@ -293,7 +293,7 @@ describe('finishTask tool', () => {
         expect(updatedContent).toContain('  Multiple lines here');
       });
 
-      it('should only modify the target file', async () => {
+      it('should only modify the target file', async() => {
         const originalBacklog = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
 
         // Modify current file
@@ -310,7 +310,7 @@ describe('finishTask tool', () => {
     });
 
     describe('cross-file task identification', () => {
-      it('should find and update tasks across both files', async () => {
+      it('should find and update tasks across both files', async() => {
         // Test updating current file task
         await handler({
           task_identifier: 'Future task',
@@ -336,7 +336,7 @@ describe('finishTask tool', () => {
     });
 
     describe('MCP response structure', () => {
-      it('should return proper MCP structure for success', async () => {
+      it('should return proper MCP structure for success', async() => {
         const result = await handler({
           task_identifier: 'Unique test task',
           status: 'completed',
@@ -349,7 +349,7 @@ describe('finishTask tool', () => {
         expect(result).not.toHaveProperty('isError');
       });
 
-      it('should return proper MCP structure for errors', async () => {
+      it('should return proper MCP structure for errors', async() => {
         const result = await handler({
           task_identifier: 'Nonexistent task',
           status: 'completed',

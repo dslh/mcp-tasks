@@ -81,7 +81,7 @@ describe('addTask tool', () => {
 
   describe('handler function', () => {
     describe('adding tasks to different targets', () => {
-      it('should add task to current week', async () => {
+      it('should add task to current week', async() => {
         const result = await handler({
           task_text: 'New current task',
           target: 'current_week',
@@ -106,7 +106,7 @@ describe('addTask tool', () => {
         });
       });
 
-      it('should add task to next week', async () => {
+      it('should add task to next week', async() => {
         const result = await handler({
           task_text: 'New future task',
           target: 'next_week',
@@ -129,7 +129,7 @@ describe('addTask tool', () => {
         });
       });
 
-      it('should add task to backlog with date', async () => {
+      it('should add task to backlog with date', async() => {
         const result = await handler({
           task_text: 'New backlog task',
           target: 'backlog',
@@ -159,7 +159,7 @@ describe('addTask tool', () => {
     });
 
     describe('tasks with descriptions', () => {
-      it('should add task with description to current week', async () => {
+      it('should add task with description to current week', async() => {
         const result = await handler({
           task_text: 'Task with description',
           target: 'current_week',
@@ -175,7 +175,7 @@ describe('addTask tool', () => {
         expect(result.content[0].text).toContain('Successfully added task "Task with description" to This Week');
       });
 
-      it('should add task with description to backlog', async () => {
+      it('should add task with description to backlog', async() => {
         await handler({
           task_text: 'Backlog task',
           target: 'backlog',
@@ -188,7 +188,7 @@ describe('addTask tool', () => {
         expect(backlogContent).toContain('  Future implementation notes');
       });
 
-      it('should handle empty description as undefined', async () => {
+      it('should handle empty description as undefined', async() => {
         await handler({
           task_text: 'Task without description',
           target: 'current_week',
@@ -202,12 +202,12 @@ describe('addTask tool', () => {
         const lines = currentContent.split('\n');
         const taskLineIndex = lines.findIndex(line => line.includes('Task without description'));
 
-        expect(lines[taskLineIndex + 1]).not.toMatch(/^  /);
+        expect(lines[taskLineIndex + 1]).not.toMatch(/^ {2}/);
       });
     });
 
     describe('date handling for backlog tasks', () => {
-      it('should append current date to backlog tasks', async () => {
+      it('should append current date to backlog tasks', async() => {
         mockGetCurrentDate.mockReturnValue('2024-03-20');
 
         await handler({
@@ -220,7 +220,7 @@ describe('addTask tool', () => {
         expect(backlogContent).toContain('- [ ] Time-sensitive task added on 2024-03-20');
       });
 
-      it('should not append date to current_week tasks', async () => {
+      it('should not append date to current_week tasks', async() => {
         await handler({
           task_text: 'Current task',
           target: 'current_week',
@@ -232,7 +232,7 @@ describe('addTask tool', () => {
         expect(currentContent).not.toContain('added on');
       });
 
-      it('should not append date to next_week tasks', async () => {
+      it('should not append date to next_week tasks', async() => {
         await handler({
           task_text: 'Future task',
           target: 'next_week',
@@ -246,7 +246,7 @@ describe('addTask tool', () => {
     });
 
     describe('error scenarios', () => {
-      it('should handle git commit failure', async () => {
+      it('should handle git commit failure', async() => {
         mockCommitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
 
         const result = await handler({
@@ -264,7 +264,7 @@ describe('addTask tool', () => {
         expect(result.content[0].text).toContain('Error adding task: Git commit failed');
       });
 
-      it('should handle missing sections gracefully', async () => {
+      it('should handle missing sections gracefully', async() => {
         // Create file without required sections
         writeFileSync(join(testDir, 'current.md'), `# Random Section
 - [ ] Random task`);
@@ -280,7 +280,7 @@ describe('addTask tool', () => {
         expect(result.content[0].text).toContain('This Week');
       });
 
-      it('should handle missing backlog file', async () => {
+      it('should handle missing backlog file', async() => {
         // Remove backlog file
         rmSync(join(testDir, 'backlog.md'));
 
@@ -295,7 +295,7 @@ describe('addTask tool', () => {
     });
 
     describe('file preservation', () => {
-      it('should preserve existing content and structure', async () => {
+      it('should preserve existing content and structure', async() => {
         const originalContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
 
         await handler({
@@ -319,7 +319,7 @@ describe('addTask tool', () => {
         expect(updatedContent).toContain('- [ ] New task');
       });
 
-      it('should only modify the target file', async () => {
+      it('should only modify the target file', async() => {
         const originalBacklog = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
 
         // Add task to current file
@@ -336,7 +336,7 @@ describe('addTask tool', () => {
     });
 
     describe('section handling', () => {
-      it('should add tasks to correct sections', async () => {
+      it('should add tasks to correct sections', async() => {
         // Add tasks to different sections
         await handler({ task_text: 'Task 1', target: 'current_week' });
         await handler({ task_text: 'Task 2', target: 'next_week' });
@@ -355,7 +355,7 @@ describe('addTask tool', () => {
         expect(backlogContent).not.toContain('Task 2');
       });
 
-      it('should handle tasks with special characters', async () => {
+      it('should handle tasks with special characters', async() => {
         await handler({
           task_text: 'Task with "quotes" & symbols!',
           target: 'current_week',
@@ -370,7 +370,7 @@ describe('addTask tool', () => {
     });
 
     describe('MCP response structure', () => {
-      it('should return proper MCP structure for success', async () => {
+      it('should return proper MCP structure for success', async() => {
         const result = await handler({
           task_text: 'Test task',
           target: 'current_week',
@@ -383,7 +383,7 @@ describe('addTask tool', () => {
         expect(result).not.toHaveProperty('isError');
       });
 
-      it('should return proper MCP structure for errors', async () => {
+      it('should return proper MCP structure for errors', async() => {
         mockCommitChanges.mockRejectedValueOnce(new Error('Test error'));
 
         const result = await handler({
@@ -400,7 +400,7 @@ describe('addTask tool', () => {
     });
 
     describe('target determination logic', () => {
-      it('should map targets to correct files and sections', async () => {
+      it('should map targets to correct files and sections', async() => {
         // Test all target mappings
         const testCases = [
           { target: 'backlog', expectedFile: 'backlog.md', expectedSection: 'Backlog' },

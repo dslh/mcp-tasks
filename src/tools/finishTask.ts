@@ -27,12 +27,8 @@ function checkTaskAlreadyInState(
   task: TaskMatch,
   status: 'completed' | 'closed',
 ): string | null {
-  if (status === 'completed' && task.isCompleted) {
-    return `Task "${task.taskText}" is already marked as completed`;
-  }
-
-  if (status === 'closed' && task.isClosed) {
-    return `Task "${task.taskText}" is already marked as closed`;
+  if (task.status === status) {
+    return `Task "${task.taskText}" is already marked as ${status}`;
   }
 
   return null;

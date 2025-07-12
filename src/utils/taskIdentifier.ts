@@ -1,28 +1,42 @@
 import { parseMarkdownSections } from './markdown';
 import { readFile } from './fileOperations';
 
+export type TaskStatus = 'new' | 'completed' | 'closed';
+
 export interface TaskMatch {
   file: 'current' | 'backlog';
   section: string;
   taskText: string;
   lineNumber: number;
-  isCompleted: boolean;
-  isClosed: boolean;
+  status: TaskStatus;
 }
 
-function parseTaskLine(line: string): { taskText: string; isCompleted: boolean; isClosed: boolean } | null {
+function parseTaskLine(line: string): { taskText: string; status: TaskStatus } | null {
   const taskMatch = line.match(/^- \[([ x-])\] (.+)$/);
 
   if (!taskMatch) {
     return null;
   }
 
-  const [, status, taskText] = taskMatch;
+  const [, statusChar, taskText] = taskMatch;
+
+  let status: TaskStatus;
+
+  switch (statusChar) {
+    case 'x':
+      status = 'completed';
+      break;
+    case '-':
+      status = 'closed';
+      break;
+    default:
+      status = 'new';
+      break;
+  }
 
   return {
     taskText: taskText.trim(),
-    isCompleted: status === 'x',
-    isClosed: status === '-',
+    status,
   };
 }
 
@@ -44,8 +58,7 @@ function findTasksInFile(fileName: 'current' | 'backlog'): TaskMatch[] {
           section: section.title,
           taskText: taskInfo.taskText,
           lineNumber,
-          isCompleted: taskInfo.isCompleted,
-          isClosed: taskInfo.isClosed,
+          status: taskInfo.status,
         });
       }
     }

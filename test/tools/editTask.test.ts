@@ -83,7 +83,7 @@ describe('editTask tool', () => {
 
   describe('handler function', () => {
     describe('parameter validation', () => {
-      it('should require at least one of new_text or new_description', async () => {
+      it('should require at least one of new_text or new_description', async() => {
         const result = await handler({
           task_identifier: 'Simple task',
         });
@@ -92,7 +92,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('At least one of new_text or new_description must be provided');
       });
 
-      it('should reject empty new_text when no new_description provided', async () => {
+      it('should reject empty new_text when no new_description provided', async() => {
         const result = await handler({
           task_identifier: 'Simple task',
           new_text: '',
@@ -102,7 +102,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('At least one of new_text or new_description must be provided');
       });
 
-      it('should accept empty new_text when new_description is provided', async () => {
+      it('should accept empty new_text when new_description is provided', async() => {
         const result = await handler({
           task_identifier: 'Simple task',
           new_text: '',
@@ -110,14 +110,15 @@ describe('editTask tool', () => {
         });
 
         expect(result).not.toHaveProperty('isError');
-        
+
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
+
         expect(currentContent).toContain('  New description');
       });
     });
 
     describe('text updates for current tasks', () => {
-      it('should update task text in current file', async () => {
+      it('should update task text in current file', async() => {
         const result = await handler({
           task_identifier: 'Simple task',
           new_text: 'Updated simple task',
@@ -138,7 +139,7 @@ describe('editTask tool', () => {
         });
       });
 
-      it('should preserve task status when updating text', async () => {
+      it('should preserve task status when updating text', async() => {
         await handler({
           task_identifier: 'Completed task',
           new_text: 'Updated completed task',
@@ -150,7 +151,7 @@ describe('editTask tool', () => {
         expect(currentContent).not.toContain('- [x] Completed task');
       });
 
-      it('should handle special characters in new text', async () => {
+      it('should handle special characters in new text', async() => {
         await handler({
           task_identifier: 'Simple task',
           new_text: 'Task with "quotes" & symbols! 🚀',
@@ -163,7 +164,7 @@ describe('editTask tool', () => {
     });
 
     describe('text updates for backlog tasks with date preservation', () => {
-      it('should update backlog task text while preserving date', async () => {
+      it('should update backlog task text while preserving date', async() => {
         await handler({
           task_identifier: 'Backlog task added on 2024-01-01',
           new_text: 'Updated backlog task',
@@ -175,7 +176,7 @@ describe('editTask tool', () => {
         expect(backlogContent).not.toContain('- [ ] Backlog task added on 2024-01-01');
       });
 
-      it('should preserve date when updating completed backlog task', async () => {
+      it('should preserve date when updating completed backlog task', async() => {
         await handler({
           task_identifier: 'Completed backlog task added on 2024-01-03',
           new_text: 'Updated completed backlog task',
@@ -186,10 +187,11 @@ describe('editTask tool', () => {
         expect(backlogContent).toContain('- [x] Updated completed backlog task added on 2024-01-03');
       });
 
-      it('should add current date if backlog task has no date', async () => {
+      it('should add current date if backlog task has no date', async() => {
         // Add a backlog task without date
         const backlogContent = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
-        const modifiedContent = backlogContent + '\n- [ ] Task without date\n';
+        const modifiedContent = `${backlogContent  }\n- [ ] Task without date\n`;
+
         writeFileSync(join(testDir, 'backlog.md'), modifiedContent);
 
         await handler({
@@ -204,7 +206,7 @@ describe('editTask tool', () => {
     });
 
     describe('description updates', () => {
-      it('should add description to task without one', async () => {
+      it('should add description to task without one', async() => {
         const result = await handler({
           task_identifier: 'Task without description',
           new_description: 'Newly added description',
@@ -218,7 +220,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('Successfully updated task "Task without description" - Updated description');
       });
 
-      it('should update existing description', async () => {
+      it('should update existing description', async() => {
         await handler({
           task_identifier: 'Task with description',
           new_description: 'Updated description\nWith new content',
@@ -233,7 +235,7 @@ describe('editTask tool', () => {
         expect(currentContent).not.toContain('  Multiple lines');
       });
 
-      it('should clear description when set to empty string', async () => {
+      it('should clear description when set to empty string', async() => {
         const result = await handler({
           task_identifier: 'Task with description',
           new_description: '',
@@ -248,7 +250,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('Successfully updated task "Task with description" - Updated description (cleared)');
       });
 
-      it('should clear description when set to null', async () => {
+      it('should clear description when set to null', async() => {
         await handler({
           task_identifier: 'Task with description',
           new_description: null,
@@ -261,7 +263,7 @@ describe('editTask tool', () => {
         expect(currentContent).not.toContain('  Multiple lines');
       });
 
-      it('should handle multiline descriptions', async () => {
+      it('should handle multiline descriptions', async() => {
         await handler({
           task_identifier: 'Task without description',
           new_description: 'Line 1\nLine 2\nLine 3',
@@ -275,7 +277,7 @@ describe('editTask tool', () => {
         expect(currentContent).toContain('  Line 3');
       });
 
-      it('should update descriptions for backlog tasks', async () => {
+      it('should update descriptions for backlog tasks', async() => {
         await handler({
           task_identifier: 'Another backlog task added on 2024-01-02',
           new_description: 'Updated backlog description',
@@ -290,7 +292,7 @@ describe('editTask tool', () => {
     });
 
     describe('combined text and description updates', () => {
-      it('should update both text and description', async () => {
+      it('should update both text and description', async() => {
         const result = await handler({
           task_identifier: 'Task with description',
           new_text: 'Updated task text',
@@ -309,7 +311,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('Successfully updated task "Task with description" - Updated text and description');
       });
 
-      it('should update text and clear description', async () => {
+      it('should update text and clear description', async() => {
         const result = await handler({
           task_identifier: 'Task with description',
           new_text: 'New text without description',
@@ -324,7 +326,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('Updated text and description (cleared)');
       });
 
-      it('should handle combined updates for backlog tasks', async () => {
+      it('should handle combined updates for backlog tasks', async() => {
         await handler({
           task_identifier: 'Backlog task added on 2024-01-01',
           new_text: 'Updated backlog text',
@@ -339,7 +341,7 @@ describe('editTask tool', () => {
     });
 
     describe('cross-file task identification', () => {
-      it('should find and update tasks in different files', async () => {
+      it('should find and update tasks in different files', async() => {
         // Update task in current file
         await handler({
           task_identifier: 'Future task',
@@ -359,7 +361,7 @@ describe('editTask tool', () => {
         expect(backlogContent).toContain('- [ ] Updated another backlog task added on 2024-01-02');
       });
 
-      it('should preserve content in non-target files', async () => {
+      it('should preserve content in non-target files', async() => {
         const originalBacklog = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
 
         // Update task in current file
@@ -376,7 +378,7 @@ describe('editTask tool', () => {
     });
 
     describe('error scenarios', () => {
-      it('should handle task not found', async () => {
+      it('should handle task not found', async() => {
         const result = await handler({
           task_identifier: 'Nonexistent task',
           new_text: 'New text',
@@ -390,10 +392,11 @@ describe('editTask tool', () => {
         expect(mockCommitChanges).not.toHaveBeenCalled();
       });
 
-      it('should handle ambiguous task identifier', async () => {
+      it('should handle ambiguous task identifier', async() => {
         // Add another task with similar text
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
-        const modifiedContent = currentContent + '\n- [ ] Another simple task\n';
+        const modifiedContent = `${currentContent  }\n- [ ] Another simple task\n`;
+
         writeFileSync(join(testDir, 'current.md'), modifiedContent);
 
         const result = await handler({
@@ -405,7 +408,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('Multiple matches found for "simple"');
       });
 
-      it('should handle git commit failure', async () => {
+      it('should handle git commit failure', async() => {
         mockCommitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
 
         const result = await handler({
@@ -425,7 +428,7 @@ describe('editTask tool', () => {
     });
 
     describe('file preservation', () => {
-      it('should preserve file structure and other tasks', async () => {
+      it('should preserve file structure and other tasks', async() => {
         await handler({
           task_identifier: 'Simple task',
           new_text: 'Updated simple task',
@@ -448,7 +451,7 @@ describe('editTask tool', () => {
         expect(currentContent).toContain('  Multiple lines');
       });
 
-      it('should maintain proper line structure', async () => {
+      it('should maintain proper line structure', async() => {
         await handler({
           task_identifier: 'Task without description',
           new_description: 'New description',
@@ -466,7 +469,7 @@ describe('editTask tool', () => {
     });
 
     describe('edge cases', () => {
-      it('should handle whitespace-only description as clear', async () => {
+      it('should handle whitespace-only description as clear', async() => {
         await handler({
           task_identifier: 'Task with description',
           new_description: '   \n  \n',
@@ -478,7 +481,7 @@ describe('editTask tool', () => {
         expect(currentContent).not.toContain('  Original description');
       });
 
-      it('should handle empty task identifier', async () => {
+      it('should handle empty task identifier', async() => {
         const result = await handler({
           task_identifier: '',
           new_text: 'New text',
@@ -488,7 +491,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('Task identifier cannot be empty');
       });
 
-      it('should handle very long text updates', async () => {
+      it('should handle very long text updates', async() => {
         const longText = 'Very long task text '.repeat(50);
 
         await handler({
@@ -503,7 +506,7 @@ describe('editTask tool', () => {
     });
 
     describe('MCP response structure', () => {
-      it('should return proper MCP structure for success', async () => {
+      it('should return proper MCP structure for success', async() => {
         const result = await handler({
           task_identifier: 'Simple task',
           new_text: 'Updated text',
@@ -516,7 +519,7 @@ describe('editTask tool', () => {
         expect(result).not.toHaveProperty('isError');
       });
 
-      it('should return proper MCP structure for errors', async () => {
+      it('should return proper MCP structure for errors', async() => {
         const result = await handler({
           task_identifier: 'Nonexistent task',
           new_text: 'New text',

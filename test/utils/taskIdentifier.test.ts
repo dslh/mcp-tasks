@@ -48,24 +48,21 @@ describe('taskIdentifier', () => {
         section: 'Today',
         taskText: 'Write tests',
         lineNumber: 2,
-        isCompleted: false,
-        isClosed: false,
+        status: 'new',
       });
       expect(currentTasks[1]).toEqual({
         file: 'current',
         section: 'Today',
         taskText: 'Complete feature',
         lineNumber: 3,
-        isCompleted: true,
-        isClosed: false,
+        status: 'completed',
       });
       expect(currentTasks[2]).toEqual({
         file: 'current',
         section: 'Today',
         taskText: 'Cancelled task',
         lineNumber: 4,
-        isCompleted: false,
-        isClosed: true,
+        status: 'closed',
       });
     });
 
@@ -90,8 +87,7 @@ describe('taskIdentifier', () => {
         section: 'Future',
         taskText: 'Future task',
         lineNumber: 2,
-        isCompleted: false,
-        isClosed: false,
+        status: 'new',
       });
     });
 
@@ -248,9 +244,9 @@ Some regular text
     it('should include all task statuses in results', () => {
       const matches = findMatchingTasks('e'); // Broad search
 
-      const incomplete = matches.filter(m => !m.isCompleted && !m.isClosed);
-      const completed = matches.filter(m => m.isCompleted);
-      const closed = matches.filter(m => m.isClosed);
+      const incomplete = matches.filter(m => m.status === 'new');
+      const completed = matches.filter(m => m.status === 'completed');
+      const closed = matches.filter(m => m.status === 'closed');
 
       expect(incomplete.length).toBeGreaterThan(0);
       expect(completed.length).toBeGreaterThan(0);
@@ -324,7 +320,7 @@ Some regular text
       const task = validateTaskMatch('Complete feature implementation');
 
       expect(task.taskText).toBe('Complete feature implementation');
-      expect(task.isCompleted).toBe(true);
+      expect(task.status).toBe('completed');
     });
   });
 
@@ -377,14 +373,11 @@ Another line
 
       expect(tasks).toHaveLength(3);
 
-      expect(tasks[0].isCompleted).toBe(false);
-      expect(tasks[0].isClosed).toBe(false);
+      expect(tasks[0].status).toBe('new');
 
-      expect(tasks[1].isCompleted).toBe(true);
-      expect(tasks[1].isClosed).toBe(false);
+      expect(tasks[1].status).toBe('completed');
 
-      expect(tasks[2].isCompleted).toBe(false);
-      expect(tasks[2].isClosed).toBe(true);
+      expect(tasks[2].status).toBe('closed');
     });
   });
 });
