@@ -191,6 +191,12 @@ For commands that require a `task_identifier` parameter (`edit_task`, `move_task
 - On startup, creates the directory if it does not exist, initializes a git repository if none exists, creates any files that don't exist, commits any untracked changes
 - Operates over stdio transport
 
+### MCP Resources
+- Exposes `current.md` and `backlog.md` files as MCP resources for direct access
+- Resource URIs: `file:///current.md` and `file:///backlog.md`
+- Allows clients to read task files directly without using tool calls
+- Tool calls remain available to support different workflows
+
 ## Design Principles
 
 ### Simplicity
