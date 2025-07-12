@@ -2,7 +2,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { getCurrentDate, getArchiveWeekDate } from 'src/utils/dates';
 
-// eslint-disable-next-line max-lines-per-function
 describe('dates utilities', () => {
   describe('getCurrentDate', () => {
     it('should return date in YYYY-MM-DD format', () => {
@@ -19,7 +18,6 @@ describe('dates utilities', () => {
     });
   });
 
-  // eslint-disable-next-line max-lines-per-function
   describe('getArchiveWeekDate', () => {
     let originalDate: typeof Date;
 

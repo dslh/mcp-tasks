@@ -124,7 +124,7 @@ describe('finishTask tool', () => {
       });
 
       it('should complete a task in backlog file', async() => {
-        const result = await handler({
+        await handler({
           task_identifier: 'Backlog task added on 2024-01-01',
           status: 'completed',
         });
@@ -144,7 +144,7 @@ describe('finishTask tool', () => {
       });
 
       it('should handle task with description', async() => {
-        const result = await handler({
+        await handler({
           task_identifier: 'Task with description',
           status: 'completed',
         });
@@ -266,8 +266,6 @@ describe('finishTask tool', () => {
 
     describe('file preservation', () => {
       it('should preserve file structure and other content', async() => {
-        const originalContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
-
         await handler({
           task_identifier: 'Incomplete task',
           status: 'completed',

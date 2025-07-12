@@ -6,27 +6,27 @@ import { isGitRepo, initGitRepo, hasUntrackedFiles, commitChanges } from 'src/ut
 const mockSpawn = mock(() => {
   const mockChild = {
     stdout: {
-      on: mock((event: string, callback: (data: Buffer) => void) => {
+      on: mock((event: string, callback: (_data: Buffer) => void) => {
         if (event === 'data') {
           mockChild._stdoutCallback = callback;
         }
       }),
     },
     stderr: {
-      on: mock((event: string, callback: (data: Buffer) => void) => {
+      on: mock((event: string, callback: (_data: Buffer) => void) => {
         if (event === 'data') {
           mockChild._stderrCallback = callback;
         }
       }),
     },
-    on: mock((event: string, callback: (code: number) => void) => {
+    on: mock((event: string, callback: (_code: number) => void) => {
       if (event === 'close') {
         mockChild._closeCallback = callback;
       }
     }),
-    _stdoutCallback: null as ((data: Buffer) => void) | null,
-    _stderrCallback: null as ((data: Buffer) => void) | null,
-    _closeCallback: null as ((code: number) => void) | null,
+    _stdoutCallback: null as ((_data: Buffer) => void) | null,
+    _stderrCallback: null as ((_data: Buffer) => void) | null,
+    _closeCallback: null as ((_code: number) => void) | null,
     _emitStdout: (data: string) => {
       if (mockChild._stdoutCallback) {
         mockChild._stdoutCallback(Buffer.from(data));
@@ -68,7 +68,7 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               // Simulate successful git command
               setTimeout(() => callback(0), 1);
@@ -94,7 +94,7 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               // Simulate failed git command
               setTimeout(() => callback(128), 1);
@@ -123,14 +123,11 @@ describe('git utilities', () => {
 
   describe('initGitRepo', () => {
     it('should execute git init and config commands', async() => {
-      let callCount = 0;
-
       mockSpawn.mockImplementation(() => {
-        callCount++;
         const mockChild = {
           stdout: { on: mock() },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(0), 1);
             }
@@ -168,13 +165,13 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data') {
                 setTimeout(() => callback(Buffer.from('fatal: not a git repository')), 1);
               }
             }),
           },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(1), 2);
             }
@@ -195,13 +192,13 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data' && callCount === 2) {
                 setTimeout(() => callback(Buffer.from('error: could not set config')), 1);
               }
             }),
           },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               const exitCode = callCount === 2 ? 1 : 0;
 
@@ -222,14 +219,14 @@ describe('git utilities', () => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data') {
                 setTimeout(() => callback(Buffer.from('?? untracked.txt\n M modified.txt\n')), 1);
               }
             }),
           },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(0), 2);
             }
@@ -253,14 +250,14 @@ describe('git utilities', () => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data') {
                 setTimeout(() => callback(Buffer.from('')), 1);
               }
             }),
           },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(0), 2);
             }
@@ -280,7 +277,7 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(128), 1);
             }
@@ -299,14 +296,14 @@ describe('git utilities', () => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data') {
                 setTimeout(() => callback(Buffer.from('   \n  \n')), 1);
               }
             }),
           },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(0), 2);
             }
@@ -324,14 +321,11 @@ describe('git utilities', () => {
 
   describe('commitChanges', () => {
     it('should execute git add and commit commands', async() => {
-      let callCount = 0;
-
       mockSpawn.mockImplementation(() => {
-        callCount++;
         const mockChild = {
           stdout: { on: mock() },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(0), 1);
             }
@@ -363,13 +357,13 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data') {
                 setTimeout(() => callback(Buffer.from('fatal: not a git repository')), 1);
               }
             }),
           },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(128), 2);
             }
@@ -390,13 +384,13 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data' && callCount === 2) {
                 setTimeout(() => callback(Buffer.from('nothing to commit')), 1);
               }
             }),
           },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               const exitCode = callCount === 2 ? 1 : 0;
 
@@ -416,7 +410,7 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(0), 1);
             }
@@ -443,13 +437,13 @@ describe('git utilities', () => {
         const mockChild = {
           stdout: { on: mock() },
           stderr: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data') {
                 setTimeout(() => callback(Buffer.from('error: some git error')), 1);
               }
             }),
           },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(1), 2);
             }
@@ -466,14 +460,14 @@ describe('git utilities', () => {
       mockSpawn.mockImplementationOnce(() => {
         const mockChild = {
           stdout: {
-            on: mock((event: string, callback: (data: Buffer) => void) => {
+            on: mock((event: string, callback: (_data: Buffer) => void) => {
               if (event === 'data') {
                 setTimeout(() => callback(Buffer.from('.git\n')), 1);
               }
             }),
           },
           stderr: { on: mock() },
-          on: mock((event: string, callback: (code: number) => void) => {
+          on: mock((event: string, callback: (_code: number) => void) => {
             if (event === 'close') {
               setTimeout(() => callback(0), 2);
             }

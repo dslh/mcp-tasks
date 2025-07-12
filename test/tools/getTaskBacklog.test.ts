@@ -71,6 +71,7 @@ describe('getTaskBacklog tool', () => {
 
       it('should handle non-Error exceptions', () => {
         fileOperations.readFile.mockImplementation(() => {
+          // eslint-disable-next-line no-throw-literal
           throw 'String error';
         });
 

@@ -288,8 +288,6 @@ describe('addTask tool', () => {
 
     describe('file preservation', () => {
       it('should preserve existing content and structure', async() => {
-        const originalContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
-
         await handler({
           task_text: 'New task',
           target: 'current_week',

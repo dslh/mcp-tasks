@@ -380,8 +380,6 @@ describe('moveTask tool', () => {
       });
 
       it('should only modify target files when moving to/from backlog', async() => {
-        const originalCurrentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
-
         await handler({
           task_identifier: 'Backlog task added on 2024-01-01',
           destination: 'current_week',
