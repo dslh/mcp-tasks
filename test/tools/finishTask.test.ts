@@ -1,15 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { setWorkingDirectory } from 'src/config';
 import { name, config, handler } from 'src/tools/finishTask';
-
-// Mock only git operations
-const mockCommitChanges = mock(() => Promise.resolve());
-
-mock.module('src/utils/git', () => ({
-  commitChanges: mockCommitChanges,
-}));
+import * as gitUtils from 'src/utils/git';
 
 describe('finishTask tool', () => {
   const testDir = '/tmp/mcp-tasks-test-finishtask';
@@ -40,8 +34,8 @@ describe('finishTask tool', () => {
 - [ ] Backlog task added on 2024-01-01
 - [x] Completed backlog task added on 2024-01-02`);
 
-    // Reset mock
-    mockCommitChanges.mockClear();
+    // Set up mocks for this test
+    spyOn(gitUtils, 'commitChanges').mockResolvedValue();
   });
 
   afterEach(() => {
@@ -49,6 +43,8 @@ describe('finishTask tool', () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });
     }
+    // Clear all spies
+    mock.restore();
   });
 
   describe('tool metadata', () => {
@@ -92,7 +88,7 @@ describe('finishTask tool', () => {
         expect(currentContent).toContain('- [-] Already closed task');
 
         // Verify git commit
-        expect(mockCommitChanges).toHaveBeenCalledWith('Completed task: Incomplete task');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Completed task: Incomplete task');
 
         // Verify response
         expect(result).toEqual({
@@ -116,7 +112,7 @@ describe('finishTask tool', () => {
         expect(currentContent).not.toContain('- [ ] Incomplete task');
 
         // Verify git commit
-        expect(mockCommitChanges).toHaveBeenCalledWith('Closed task: Incomplete task');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Closed task: Incomplete task');
 
         // Verify response
         expect(result).toEqual({
@@ -144,7 +140,7 @@ describe('finishTask tool', () => {
 
         expect(currentContent).toContain('- [ ] Incomplete task');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Completed task: Backlog task added on 2024-01-01');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Completed task: Backlog task added on 2024-01-01');
       });
 
       it('should handle task with description', async() => {
@@ -174,7 +170,7 @@ describe('finishTask tool', () => {
         expect(currentContent).toContain('- [x] Already completed task');
 
         // Verify no git commit
-        expect(mockCommitChanges).not.toHaveBeenCalled();
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
 
         // Verify response
         expect(result).toEqual({
@@ -197,7 +193,7 @@ describe('finishTask tool', () => {
         expect(currentContent).toContain('- [-] Already closed task');
 
         // Verify no git commit
-        expect(mockCommitChanges).not.toHaveBeenCalled();
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
 
         // Verify response
         expect(result).toEqual({
@@ -224,7 +220,7 @@ describe('finishTask tool', () => {
         expect(originalBacklog).toContain('- [ ] Backlog task added on 2024-01-01');
 
         // Verify no git commit
-        expect(mockCommitChanges).not.toHaveBeenCalled();
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
 
         // Verify error response
         expect(result.isError).toBe(true);
@@ -250,7 +246,7 @@ describe('finishTask tool', () => {
       });
 
       it('should handle git commit failure', async() => {
-        mockCommitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
+        gitUtils.commitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
 
         const result = await handler({
           task_identifier: 'Incomplete task',
@@ -321,7 +317,7 @@ describe('finishTask tool', () => {
 
         expect(currentContent).toContain('- [x] Future task');
 
-        mockCommitChanges.mockClear();
+        gitUtils.commitChanges.mockClear();
 
         // Test updating backlog file task
         await handler({

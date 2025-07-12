@@ -1,22 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { setWorkingDirectory } from 'src/config';
 import { name, config, handler } from 'src/tools/startWeek';
-
-// Mock git operations and dates
-const mockCommitChanges = mock(() => Promise.resolve());
-const mockGetCurrentDate = mock(() => '2024-01-15');
-const mockGetArchiveWeekDate = mock(() => '2024-01-08');
-
-mock.module('src/utils/git', () => ({
-  commitChanges: mockCommitChanges,
-}));
-
-mock.module('src/utils/dates', () => ({
-  getCurrentDate: mockGetCurrentDate,
-  getArchiveWeekDate: mockGetArchiveWeekDate,
-}));
+import * as gitUtils from 'src/utils/git';
+import * as dateUtils from 'src/utils/dates';
 
 describe('startWeek tool', () => {
   const testDir = '/tmp/mcp-tasks-test-startweek';
@@ -66,10 +54,10 @@ describe('startWeek tool', () => {
 - [ ] Backlog task 1 added on 2024-01-01
 - [ ] Backlog task 2 added on 2024-01-02`);
 
-    // Reset mocks
-    mockCommitChanges.mockClear();
-    mockGetCurrentDate.mockReturnValue('2024-01-15');
-    mockGetArchiveWeekDate.mockReturnValue('2024-01-08');
+    // Set up mocks for this test
+    spyOn(gitUtils, 'commitChanges').mockResolvedValue();
+    spyOn(dateUtils, 'getCurrentDate').mockReturnValue('2024-01-15');
+    spyOn(dateUtils, 'getArchiveWeekDate').mockReturnValue('2024-01-08');
   });
 
   afterEach(() => {
@@ -77,6 +65,8 @@ describe('startWeek tool', () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });
     }
+    // Clear all spies
+    mock.restore();
   });
 
   describe('tool metadata', () => {
@@ -99,7 +89,7 @@ describe('startWeek tool', () => {
 
   describe('handler function', () => {
     describe('successful week transition', () => {
-      it('should complete full weekly transition workflow', async () => {
+      it('should complete full weekly transition workflow', async() => {
         const result = await handler();
 
         // Verify success response
@@ -111,12 +101,12 @@ describe('startWeek tool', () => {
         });
 
         // Verify git commits were made
-        expect(mockCommitChanges).toHaveBeenCalledTimes(2);
-        expect(mockCommitChanges).toHaveBeenNthCalledWith(1, 'Pre-start-week backup');
-        expect(mockCommitChanges).toHaveBeenNthCalledWith(2, 'Completed week transition to 2024-01-15');
+        expect(gitUtils.commitChanges).toHaveBeenCalledTimes(2);
+        expect(gitUtils.commitChanges).toHaveBeenNthCalledWith(1, 'Pre-start-week backup');
+        expect(gitUtils.commitChanges).toHaveBeenNthCalledWith(2, 'Completed week transition to 2024-01-15');
       });
 
-      it('should archive last week content to archive.md', async () => {
+      it('should archive last week content to archive.md', async() => {
         await handler();
 
         const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
@@ -136,7 +126,7 @@ describe('startWeek tool', () => {
         expect(archiveContent).toContain('- [x] Old completed task');
       });
 
-      it('should rebuild current.md with proper section transitions', async () => {
+      it('should rebuild current.md with proper section transitions', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -153,7 +143,7 @@ describe('startWeek tool', () => {
     });
 
     describe('task filtering and transitions', () => {
-      it('should move completed/closed tasks from This Week to Last Week', async () => {
+      it('should move completed/closed tasks from This Week to Last Week', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -172,7 +162,7 @@ describe('startWeek tool', () => {
         expect(lastWeekLines.join('\n')).toContain('  Details here');
       });
 
-      it('should move unfinished tasks from This Week to This Week (preserve)', async () => {
+      it('should move unfinished tasks from This Week to This Week (preserve)', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -192,7 +182,7 @@ describe('startWeek tool', () => {
         expect(thisWeekLines.join('\n')).not.toContain('- [-] Closed this week task');
       });
 
-      it('should move tasks from Next Week to This Week', async () => {
+      it('should move tasks from Next Week to This Week', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -210,7 +200,7 @@ describe('startWeek tool', () => {
         expect(thisWeekLines.join('\n')).toContain('  Next week description');
       });
 
-      it('should leave Next Week section empty after transition', async () => {
+      it('should leave Next Week section empty after transition', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -222,12 +212,13 @@ describe('startWeek tool', () => {
 
         // Should be empty (or just whitespace)
         const nonEmptyLines = nextWeekLines.filter(line => line.trim() !== '');
+
         expect(nonEmptyLines).toHaveLength(0);
       });
     });
 
     describe('description preservation', () => {
-      it('should preserve task descriptions during all transitions', async () => {
+      it('should preserve task descriptions during all transitions', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -237,18 +228,19 @@ describe('startWeek tool', () => {
         expect(currentContent).toContain('  This week description');
         expect(currentContent).toContain('  Details here');
 
-        // Check This Week section (moved from Next Week)  
+        // Check This Week section (moved from Next Week)
         expect(currentContent).toContain('- [ ] Next week task with description');
         expect(currentContent).toContain('  Next week description');
 
         // Check archive for Last Week descriptions
         const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
+
         expect(archiveContent).toContain('- [x] Task with description from last week');
         expect(archiveContent).toContain('  Last week description');
         expect(archiveContent).toContain('  Multiple lines');
       });
 
-      it('should handle tasks without descriptions correctly', async () => {
+      it('should handle tasks without descriptions correctly', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -261,16 +253,17 @@ describe('startWeek tool', () => {
     });
 
     describe('file operations', () => {
-      it('should not modify backlog.md', async () => {
+      it('should not modify backlog.md', async() => {
         const originalBacklog = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
 
         await handler();
 
         const currentBacklog = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
+
         expect(currentBacklog).toBe(originalBacklog);
       });
 
-      it('should preserve existing archive content', async () => {
+      it('should preserve existing archive content', async() => {
         await handler();
 
         const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
@@ -283,7 +276,7 @@ describe('startWeek tool', () => {
         expect(archiveContent).toContain('- [x] Very old task');
       });
 
-      it('should maintain proper file structure and formatting', async () => {
+      it('should maintain proper file structure and formatting', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -299,25 +292,26 @@ describe('startWeek tool', () => {
     });
 
     describe('date handling', () => {
-      it('should use archive date for archive section title', async () => {
-        mockGetArchiveWeekDate.mockReturnValue('2024-02-05');
+      it('should use archive date for archive section title', async() => {
+        spyOn(dateUtils, 'getArchiveWeekDate').mockReturnValue('2024-02-05');
 
         await handler();
 
         const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
+
         expect(archiveContent).toContain('# Week of 2024-02-05');
       });
 
-      it('should use current date in commit message', async () => {
-        mockGetCurrentDate.mockReturnValue('2024-02-12');
+      it('should use current date in commit message', async() => {
+        spyOn(dateUtils, 'getCurrentDate').mockReturnValue('2024-02-12');
 
         await handler();
 
-        expect(mockCommitChanges).toHaveBeenNthCalledWith(2, 'Completed week transition to 2024-02-12');
+        expect(gitUtils.commitChanges).toHaveBeenNthCalledWith(2, 'Completed week transition to 2024-02-12');
       });
 
-      it('should use correct dates in success message', async () => {
-        mockGetArchiveWeekDate.mockReturnValue('2024-03-04');
+      it('should use correct dates in success message', async() => {
+        spyOn(dateUtils, 'getArchiveWeekDate').mockReturnValue('2024-03-04');
 
         const result = await handler();
 
@@ -326,22 +320,22 @@ describe('startWeek tool', () => {
     });
 
     describe('git workflow', () => {
-      it('should make pre-backup commit before changes', async () => {
+      it('should make pre-backup commit before changes', async() => {
         await handler();
 
         // First commit should be pre-backup
-        expect(mockCommitChanges).toHaveBeenNthCalledWith(1, 'Pre-start-week backup');
+        expect(gitUtils.commitChanges).toHaveBeenNthCalledWith(1, 'Pre-start-week backup');
       });
 
-      it('should make final commit after changes', async () => {
+      it('should make final commit after changes', async() => {
         await handler();
 
         // Second commit should be final
-        expect(mockCommitChanges).toHaveBeenNthCalledWith(2, 'Completed week transition to 2024-01-15');
+        expect(gitUtils.commitChanges).toHaveBeenNthCalledWith(2, 'Completed week transition to 2024-01-15');
       });
 
-      it('should handle git failure during pre-backup', async () => {
-        mockCommitChanges.mockRejectedValueOnce(new Error('Git pre-backup failed'));
+      it('should handle git failure during pre-backup', async() => {
+        spyOn(gitUtils, 'commitChanges').mockRejectedValueOnce(new Error('Git pre-backup failed'));
 
         const result = await handler();
 
@@ -349,11 +343,11 @@ describe('startWeek tool', () => {
         expect(result.content[0].text).toContain('Error during week transition: Git pre-backup failed');
 
         // Should not make second commit if first fails
-        expect(mockCommitChanges).toHaveBeenCalledTimes(1);
+        expect(gitUtils.commitChanges).toHaveBeenCalledTimes(1);
       });
 
-      it('should handle git failure during final commit', async () => {
-        mockCommitChanges
+      it('should handle git failure during final commit', async() => {
+        spyOn(gitUtils, 'commitChanges')
           .mockResolvedValueOnce(undefined) // Pre-backup succeeds
           .mockRejectedValueOnce(new Error('Git final commit failed')); // Final commit fails
 
@@ -363,12 +357,12 @@ describe('startWeek tool', () => {
         expect(result.content[0].text).toContain('Error during week transition: Git final commit failed');
 
         // Should have attempted both commits
-        expect(mockCommitChanges).toHaveBeenCalledTimes(2);
+        expect(gitUtils.commitChanges).toHaveBeenCalledTimes(2);
       });
     });
 
     describe('error scenarios', () => {
-      it('should handle missing Last Week section', async () => {
+      it('should handle missing Last Week section', async() => {
         writeFileSync(join(testDir, 'current.md'), `# This Week
 - [ ] Task 1
 
@@ -381,11 +375,11 @@ describe('startWeek tool', () => {
         expect(result.content[0].text).toContain('Error during week transition: Required sections not found in current.md');
 
         // Should make pre-backup commit but not final commit
-        expect(mockCommitChanges).toHaveBeenCalledTimes(1);
-        expect(mockCommitChanges).toHaveBeenCalledWith('Pre-start-week backup');
+        expect(gitUtils.commitChanges).toHaveBeenCalledTimes(1);
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Pre-start-week backup');
       });
 
-      it('should handle missing This Week section', async () => {
+      it('should handle missing This Week section', async() => {
         writeFileSync(join(testDir, 'current.md'), `# Last Week
 - [x] Task 1
 
@@ -398,7 +392,7 @@ describe('startWeek tool', () => {
         expect(result.content[0].text).toContain('Required sections not found in current.md');
       });
 
-      it('should handle missing Next Week section', async () => {
+      it('should handle missing Next Week section', async() => {
         writeFileSync(join(testDir, 'current.md'), `# Last Week
 - [x] Task 1
 
@@ -411,7 +405,7 @@ describe('startWeek tool', () => {
         expect(result.content[0].text).toContain('Required sections not found in current.md');
       });
 
-      it('should handle file read/write errors gracefully', async () => {
+      it('should handle file read/write errors gracefully', async() => {
         // Remove current.md to simulate file error
         rmSync(join(testDir, 'current.md'));
 
@@ -423,7 +417,7 @@ describe('startWeek tool', () => {
     });
 
     describe('edge cases', () => {
-      it('should handle empty sections gracefully', async () => {
+      it('should handle empty sections gracefully', async() => {
         writeFileSync(join(testDir, 'current.md'), `# Last Week
 
 # This Week
@@ -437,12 +431,13 @@ describe('startWeek tool', () => {
 
         // Should create proper structure even with empty sections
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
+
         expect(currentContent).toContain('# Last Week');
         expect(currentContent).toContain('# This Week');
         expect(currentContent).toContain('# Next Week');
       });
 
-      it('should handle sections with only completed tasks', async () => {
+      it('should handle sections with only completed tasks', async() => {
         writeFileSync(join(testDir, 'current.md'), `# Last Week
 - [x] All completed
 
@@ -473,7 +468,7 @@ describe('startWeek tool', () => {
         expect(thisWeekLines.join('\n')).toContain('- [ ] Future task');
       });
 
-      it('should handle sections with only unfinished tasks', async () => {
+      it('should handle sections with only unfinished tasks', async() => {
         writeFileSync(join(testDir, 'current.md'), `# Last Week
 - [ ] Unfinished last week
 
@@ -502,7 +497,7 @@ describe('startWeek tool', () => {
     });
 
     describe('MCP response structure', () => {
-      it('should return proper MCP structure for success', async () => {
+      it('should return proper MCP structure for success', async() => {
         const result = await handler();
 
         expect(Array.isArray(result.content)).toBe(true);
@@ -512,7 +507,7 @@ describe('startWeek tool', () => {
         expect(result).not.toHaveProperty('isError');
       });
 
-      it('should return proper MCP structure for errors', async () => {
+      it('should return proper MCP structure for errors', async() => {
         // Force an error by removing current.md
         rmSync(join(testDir, 'current.md'));
 

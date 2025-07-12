@@ -1,20 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { setWorkingDirectory } from 'src/config';
 import { name, config, handler } from 'src/tools/addTask';
-
-// Mock only git operations and dates
-const mockCommitChanges = mock(() => Promise.resolve());
-const mockGetCurrentDate = mock(() => '2024-01-15');
-
-mock.module('src/utils/git', () => ({
-  commitChanges: mockCommitChanges,
-}));
-
-mock.module('src/utils/dates', () => ({
-  getCurrentDate: mockGetCurrentDate,
-}));
+import * as gitUtils from 'src/utils/git';
+import * as dateUtils from 'src/utils/dates';
 
 describe('addTask tool', () => {
   const testDir = '/tmp/mcp-tasks-test-addtask';
@@ -41,9 +31,9 @@ describe('addTask tool', () => {
     writeFileSync(join(testDir, 'backlog.md'), `# Backlog
 - [ ] Existing backlog task added on 2024-01-01`);
 
-    // Reset mocks
-    mockCommitChanges.mockClear();
-    mockGetCurrentDate.mockReturnValue('2024-01-15');
+    // Set up mocks for this test
+    spyOn(gitUtils, 'commitChanges').mockResolvedValue();
+    spyOn(dateUtils, 'getCurrentDate').mockReturnValue('2024-01-15');
   });
 
   afterEach(() => {
@@ -51,6 +41,8 @@ describe('addTask tool', () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });
     }
+    // Clear all spies
+    mock.restore();
   });
 
   describe('tool metadata', () => {
@@ -95,7 +87,7 @@ describe('addTask tool', () => {
         expect(currentContent).toContain('- [ ] Existing current task');
 
         // Verify git commit
-        expect(mockCommitChanges).toHaveBeenCalledWith('Added task: New current task');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Added task: New current task');
 
         // Verify response
         expect(result).toEqual({
@@ -119,7 +111,7 @@ describe('addTask tool', () => {
         expect(currentContent).toContain('# Next Week');
         expect(currentContent).toContain('- [ ] Existing future task');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Added task: New future task');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Added task: New future task');
 
         expect(result).toEqual({
           content: [{
@@ -147,7 +139,7 @@ describe('addTask tool', () => {
 
         expect(currentContent).not.toContain('New backlog task');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Added task: New backlog task');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Added task: New backlog task');
 
         expect(result).toEqual({
           content: [{
@@ -208,7 +200,7 @@ describe('addTask tool', () => {
 
     describe('date handling for backlog tasks', () => {
       it('should append current date to backlog tasks', async() => {
-        mockGetCurrentDate.mockReturnValue('2024-03-20');
+        spyOn(dateUtils, 'getCurrentDate').mockReturnValue('2024-03-20');
 
         await handler({
           task_text: 'Time-sensitive task',
@@ -247,7 +239,7 @@ describe('addTask tool', () => {
 
     describe('error scenarios', () => {
       it('should handle git commit failure', async() => {
-        mockCommitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
+        gitUtils.commitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
 
         const result = await handler({
           task_text: 'Test task',
@@ -384,7 +376,7 @@ describe('addTask tool', () => {
       });
 
       it('should return proper MCP structure for errors', async() => {
-        mockCommitChanges.mockRejectedValueOnce(new Error('Test error'));
+        gitUtils.commitChanges.mockRejectedValueOnce(new Error('Test error'));
 
         const result = await handler({
           task_text: 'Test task',
@@ -409,7 +401,7 @@ describe('addTask tool', () => {
         ];
 
         for (const testCase of testCases) {
-          mockCommitChanges.mockClear();
+          gitUtils.commitChanges.mockClear();
 
           await handler({
             task_text: `Task for ${testCase.target}`,

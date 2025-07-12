@@ -1,21 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { setWorkingDirectory } from 'src/config';
 import { initializeWorkspace } from 'src/utils/initializeWorkspace';
-
-// Mock git utilities
-const mockIsGitRepo = mock(() => Promise.resolve(false));
-const mockInitGitRepo = mock(() => Promise.resolve());
-const mockHasUntrackedFiles = mock(() => Promise.resolve(false));
-const mockCommitChanges = mock(() => Promise.resolve());
-
-mock.module('src/utils/git', () => ({
-  isGitRepo: mockIsGitRepo,
-  initGitRepo: mockInitGitRepo,
-  hasUntrackedFiles: mockHasUntrackedFiles,
-  commitChanges: mockCommitChanges,
-}));
+import * as gitUtils from 'src/utils/git';
 
 describe('initializeWorkspace', () => {
   const testDir = '/tmp/mcp-tasks-test-initializeworkspace';
@@ -28,11 +16,11 @@ describe('initializeWorkspace', () => {
     mkdirSync(testDir, { recursive: true });
     setWorkingDirectory(testDir);
 
-    // Reset all mocks
-    mockIsGitRepo.mockClear();
-    mockInitGitRepo.mockClear();
-    mockHasUntrackedFiles.mockClear();
-    mockCommitChanges.mockClear();
+    // Set up mocks for this test
+    spyOn(gitUtils, 'isGitRepo').mockResolvedValue(false);
+    spyOn(gitUtils, 'initGitRepo').mockResolvedValue();
+    spyOn(gitUtils, 'hasUntrackedFiles').mockResolvedValue(false);
+    spyOn(gitUtils, 'commitChanges').mockResolvedValue();
   });
 
   afterEach(() => {
@@ -40,6 +28,8 @@ describe('initializeWorkspace', () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });
     }
+    // Clear all spies
+    mock.restore();
   });
 
   describe('fresh workspace creation', () => {
@@ -47,8 +37,8 @@ describe('initializeWorkspace', () => {
       // Remove test directory to simulate fresh workspace
       rmSync(testDir, { recursive: true });
 
-      mockIsGitRepo.mockResolvedValue(false);
-      mockHasUntrackedFiles.mockResolvedValue(true);
+      gitUtils.isGitRepo.mockResolvedValue(false);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(true);
 
       await initializeWorkspace();
 
@@ -56,10 +46,10 @@ describe('initializeWorkspace', () => {
       expect(existsSync(testDir)).toBe(true);
 
       // Verify git operations
-      expect(mockIsGitRepo).toHaveBeenCalledTimes(1);
-      expect(mockInitGitRepo).toHaveBeenCalledTimes(1);
-      expect(mockHasUntrackedFiles).toHaveBeenCalledTimes(1);
-      expect(mockCommitChanges).toHaveBeenCalledWith('Changes since last startup');
+      expect(gitUtils.isGitRepo).toHaveBeenCalledTimes(1);
+      expect(gitUtils.initGitRepo).toHaveBeenCalledTimes(1);
+      expect(gitUtils.hasUntrackedFiles).toHaveBeenCalledTimes(1);
+      expect(gitUtils.commitChanges).toHaveBeenCalledWith('Changes since last startup');
 
       // Verify files were created with correct templates
       expect(existsSync(join(testDir, 'current.md'))).toBe(true);
@@ -68,8 +58,8 @@ describe('initializeWorkspace', () => {
     });
 
     it('should create files with correct templates', async() => {
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 
@@ -85,35 +75,35 @@ describe('initializeWorkspace', () => {
 
   describe('existing directory scenarios', () => {
     it('should initialize git if directory exists but not a git repo', async() => {
-      mockIsGitRepo.mockResolvedValue(false);
-      mockHasUntrackedFiles.mockResolvedValue(true);
+      gitUtils.isGitRepo.mockResolvedValue(false);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(true);
 
       await initializeWorkspace();
 
-      expect(mockIsGitRepo).toHaveBeenCalledTimes(1);
-      expect(mockInitGitRepo).toHaveBeenCalledTimes(1);
-      expect(mockCommitChanges).toHaveBeenCalledWith('Changes since last startup');
+      expect(gitUtils.isGitRepo).toHaveBeenCalledTimes(1);
+      expect(gitUtils.initGitRepo).toHaveBeenCalledTimes(1);
+      expect(gitUtils.commitChanges).toHaveBeenCalledWith('Changes since last startup');
     });
 
     it('should skip git initialization if already a git repo', async() => {
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 
-      expect(mockIsGitRepo).toHaveBeenCalledTimes(1);
-      expect(mockInitGitRepo).not.toHaveBeenCalled();
-      expect(mockCommitChanges).not.toHaveBeenCalled();
+      expect(gitUtils.isGitRepo).toHaveBeenCalledTimes(1);
+      expect(gitUtils.initGitRepo).not.toHaveBeenCalled();
+      expect(gitUtils.commitChanges).not.toHaveBeenCalled();
     });
 
     it('should commit if git repo exists but has untracked files', async() => {
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(true);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(true);
 
       await initializeWorkspace();
 
-      expect(mockInitGitRepo).not.toHaveBeenCalled();
-      expect(mockCommitChanges).toHaveBeenCalledWith('Changes since last startup');
+      expect(gitUtils.initGitRepo).not.toHaveBeenCalled();
+      expect(gitUtils.commitChanges).toHaveBeenCalledWith('Changes since last startup');
     });
   });
 
@@ -122,8 +112,8 @@ describe('initializeWorkspace', () => {
       // Create only current.md
       writeFileSync(join(testDir, 'current.md'), 'existing content');
 
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 
@@ -143,8 +133,8 @@ describe('initializeWorkspace', () => {
       writeFileSync(join(testDir, 'backlog.md'), 'custom backlog');
       writeFileSync(join(testDir, 'archive.md'), 'custom archive');
 
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 
@@ -158,8 +148,8 @@ describe('initializeWorkspace', () => {
       // Create only backlog.md
       writeFileSync(join(testDir, 'backlog.md'), 'existing backlog');
 
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(true);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(true);
 
       await initializeWorkspace();
 
@@ -170,61 +160,61 @@ describe('initializeWorkspace', () => {
       expect(readFileSync(join(testDir, 'current.md'), 'utf-8')).toBe('# Last Week\n\n# This Week\n\n# Next Week\n');
       expect(readFileSync(join(testDir, 'archive.md'), 'utf-8')).toBe('# Archive\n');
 
-      expect(mockCommitChanges).toHaveBeenCalledWith('Changes since last startup');
+      expect(gitUtils.commitChanges).toHaveBeenCalledWith('Changes since last startup');
     });
   });
 
   describe('git operation sequences', () => {
 
     it('should not commit if no untracked files', async() => {
-      mockIsGitRepo.mockResolvedValue(false);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(false);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 
-      expect(mockInitGitRepo).toHaveBeenCalledTimes(1);
-      expect(mockHasUntrackedFiles).toHaveBeenCalledTimes(1);
-      expect(mockCommitChanges).not.toHaveBeenCalled();
+      expect(gitUtils.initGitRepo).toHaveBeenCalledTimes(1);
+      expect(gitUtils.hasUntrackedFiles).toHaveBeenCalledTimes(1);
+      expect(gitUtils.commitChanges).not.toHaveBeenCalled();
     });
 
     it('should handle git repo check without initialization if already exists', async() => {
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 
-      expect(mockIsGitRepo).toHaveBeenCalledTimes(1);
-      expect(mockInitGitRepo).not.toHaveBeenCalled();
-      expect(mockHasUntrackedFiles).toHaveBeenCalledTimes(1);
-      expect(mockCommitChanges).not.toHaveBeenCalled();
+      expect(gitUtils.isGitRepo).toHaveBeenCalledTimes(1);
+      expect(gitUtils.initGitRepo).not.toHaveBeenCalled();
+      expect(gitUtils.hasUntrackedFiles).toHaveBeenCalledTimes(1);
+      expect(gitUtils.commitChanges).not.toHaveBeenCalled();
     });
   });
 
   describe('error handling', () => {
     it('should propagate git initialization errors', async() => {
-      mockIsGitRepo.mockResolvedValue(false);
-      mockInitGitRepo.mockRejectedValue(new Error('Git init failed'));
+      gitUtils.isGitRepo.mockResolvedValue(false);
+      gitUtils.initGitRepo.mockRejectedValue(new Error('Git init failed'));
 
       await expect(initializeWorkspace()).rejects.toThrow('Git init failed');
     });
 
     it('should propagate git repo check errors', async() => {
-      mockIsGitRepo.mockRejectedValue(new Error('Git check failed'));
+      gitUtils.isGitRepo.mockRejectedValue(new Error('Git check failed'));
 
       await expect(initializeWorkspace()).rejects.toThrow('Git check failed');
     });
 
     it('should propagate commit errors', async() => {
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(true);
-      mockCommitChanges.mockRejectedValue(new Error('Commit failed'));
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(true);
+      gitUtils.commitChanges.mockRejectedValue(new Error('Commit failed'));
 
       await expect(initializeWorkspace()).rejects.toThrow('Commit failed');
     });
 
     it('should propagate untracked files check errors', async() => {
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockRejectedValue(new Error('Status check failed'));
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockRejectedValue(new Error('Status check failed'));
 
       await expect(initializeWorkspace()).rejects.toThrow('Status check failed');
     });
@@ -236,8 +226,8 @@ describe('initializeWorkspace', () => {
 
       setWorkingDirectory(nestedDir);
 
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 
@@ -250,8 +240,8 @@ describe('initializeWorkspace', () => {
 
     it('should handle existing directory gracefully', async() => {
       // Directory already exists from beforeEach
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       // Should not throw when directory already exists
       await initializeWorkspace();
@@ -262,8 +252,8 @@ describe('initializeWorkspace', () => {
 
   describe('file content verification', () => {
     it('should create current.md with correct template structure', async() => {
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 
@@ -279,8 +269,8 @@ describe('initializeWorkspace', () => {
     });
 
     it('should create simple templates for backlog and archive', async() => {
-      mockIsGitRepo.mockResolvedValue(true);
-      mockHasUntrackedFiles.mockResolvedValue(false);
+      gitUtils.isGitRepo.mockResolvedValue(true);
+      gitUtils.hasUntrackedFiles.mockResolvedValue(false);
 
       await initializeWorkspace();
 

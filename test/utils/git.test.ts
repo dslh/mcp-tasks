@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 import { setWorkingDirectory } from 'src/config';
 import { isGitRepo, initGitRepo, hasUntrackedFiles, commitChanges } from 'src/utils/git';
 
@@ -55,6 +55,11 @@ describe('git utilities', () => {
   beforeEach(() => {
     setWorkingDirectory('/test/directory');
     mockSpawn.mockClear();
+  });
+
+  afterEach(() => {
+    // Clear all mocks
+    mock.restore();
   });
 
   describe('isGitRepo', () => {

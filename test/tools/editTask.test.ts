@@ -1,20 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { setWorkingDirectory } from 'src/config';
 import { name, config, handler } from 'src/tools/editTask';
-
-// Mock git operations and dates
-const mockCommitChanges = mock(() => Promise.resolve());
-const mockGetCurrentDate = mock(() => '2024-01-15');
-
-mock.module('src/utils/git', () => ({
-  commitChanges: mockCommitChanges,
-}));
-
-mock.module('src/utils/dates', () => ({
-  getCurrentDate: mockGetCurrentDate,
-}));
+import * as gitUtils from 'src/utils/git';
+import * as dateUtils from 'src/utils/dates';
 
 describe('editTask tool', () => {
   const testDir = '/tmp/mcp-tasks-test-edittask';
@@ -46,9 +36,9 @@ describe('editTask tool', () => {
   With description
 - [x] Completed backlog task added on 2024-01-03`);
 
-    // Reset mocks
-    mockCommitChanges.mockClear();
-    mockGetCurrentDate.mockReturnValue('2024-01-15');
+    // Set up mocks for this test
+    spyOn(gitUtils, 'commitChanges').mockResolvedValue();
+    spyOn(dateUtils, 'getCurrentDate').mockReturnValue('2024-01-15');
   });
 
   afterEach(() => {
@@ -56,6 +46,8 @@ describe('editTask tool', () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });
     }
+    // Clear all spies
+    mock.restore();
   });
 
   describe('tool metadata', () => {
@@ -129,7 +121,7 @@ describe('editTask tool', () => {
         expect(currentContent).toContain('- [ ] Updated simple task');
         expect(currentContent).not.toContain('- [ ] Simple task');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Edited task: Simple task - Updated text');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Edited task: Simple task - Updated text');
 
         expect(result).toEqual({
           content: [{
@@ -306,7 +298,7 @@ describe('editTask tool', () => {
         expect(currentContent).not.toContain('- [ ] Task with description');
         expect(currentContent).not.toContain('  Original description');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Edited task: Task with description - Updated text and description');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Edited task: Task with description - Updated text and description');
 
         expect(result.content[0].text).toContain('Successfully updated task "Task with description" - Updated text and description');
       });
@@ -389,7 +381,7 @@ describe('editTask tool', () => {
         expect(result.content[0].text).toContain('No matching tasks found for "Nonexistent task"');
 
         // Verify no git commit
-        expect(mockCommitChanges).not.toHaveBeenCalled();
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
       });
 
       it('should handle ambiguous task identifier', async() => {
@@ -409,7 +401,7 @@ describe('editTask tool', () => {
       });
 
       it('should handle git commit failure', async() => {
-        mockCommitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
+        gitUtils.commitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
 
         const result = await handler({
           task_identifier: 'Simple task',

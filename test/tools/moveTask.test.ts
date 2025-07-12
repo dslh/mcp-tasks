@@ -1,20 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { setWorkingDirectory } from 'src/config';
 import { name, config, handler } from 'src/tools/moveTask';
-
-// Mock git operations and dates
-const mockCommitChanges = mock(() => Promise.resolve());
-const mockGetCurrentDate = mock(() => '2024-01-15');
-
-mock.module('src/utils/git', () => ({
-  commitChanges: mockCommitChanges,
-}));
-
-mock.module('src/utils/dates', () => ({
-  getCurrentDate: mockGetCurrentDate,
-}));
+import * as gitUtils from 'src/utils/git';
+import * as dateUtils from 'src/utils/dates';
 
 describe('moveTask tool', () => {
   const testDir = '/tmp/mcp-tasks-test-movetask';
@@ -48,9 +38,9 @@ describe('moveTask tool', () => {
   Backlog description
   With details`);
 
-    // Reset mocks
-    mockCommitChanges.mockClear();
-    mockGetCurrentDate.mockReturnValue('2024-01-15');
+    // Set up mocks for this test
+    spyOn(gitUtils, 'commitChanges').mockResolvedValue();
+    spyOn(dateUtils, 'getCurrentDate').mockReturnValue('2024-01-15');
   });
 
   afterEach(() => {
@@ -58,6 +48,8 @@ describe('moveTask tool', () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });
     }
+    // Clear all spies
+    mock.restore();
   });
 
   describe('tool metadata', () => {
@@ -108,7 +100,7 @@ describe('moveTask tool', () => {
         expect(currentContent).toContain('- [x] Completed task');
         expect(currentContent).toContain('- [ ] Simple next task');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Moved task: Simple current task from current week to next week');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Moved task: Simple current task from current week to next week');
 
         expect(result).toEqual({
           content: [{
@@ -130,7 +122,7 @@ describe('moveTask tool', () => {
         expect(currentContent).toContain('- [ ] Simple next task');
         // Should be removed from Next Week (but we can't easily test this without complex parsing)
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Moved task: Simple next task from next week to current week');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Moved task: Simple next task from next week to current week');
       });
 
       it('should move task from current week to backlog with date addition', async() => {
@@ -149,7 +141,7 @@ describe('moveTask tool', () => {
 
         expect(currentContent).not.toContain('- [ ] Simple current task');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Moved task: Simple current task from current week to backlog');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Moved task: Simple current task from current week to backlog');
       });
 
       it('should move task from backlog to current week with date removal', async() => {
@@ -169,7 +161,7 @@ describe('moveTask tool', () => {
 
         expect(backlogContent).not.toContain('- [ ] Backlog task added on 2024-01-01');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Moved task: Backlog task added on 2024-01-01 from backlog to current week');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Moved task: Backlog task added on 2024-01-01 from backlog to current week');
       });
 
       it('should move task from backlog to next week with date removal', async() => {
@@ -183,7 +175,7 @@ describe('moveTask tool', () => {
         expect(currentContent).toContain('- [ ] Backlog task');
         expect(currentContent).not.toContain('added on 2024-01-01');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Moved task: Backlog task added on 2024-01-01 from backlog to next week');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Moved task: Backlog task added on 2024-01-01 from backlog to next week');
       });
 
       it('should move task from next week to backlog with date addition', async() => {
@@ -196,7 +188,7 @@ describe('moveTask tool', () => {
 
         expect(backlogContent).toContain('- [ ] Simple next task added on 2024-01-15');
 
-        expect(mockCommitChanges).toHaveBeenCalledWith('Moved task: Simple next task from next week to backlog');
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Moved task: Simple next task from next week to backlog');
       });
     });
 
@@ -291,7 +283,7 @@ describe('moveTask tool', () => {
         expect(currentContent).toBe(originalContent);
 
         // Verify no git commit
-        expect(mockCommitChanges).not.toHaveBeenCalled();
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
 
         expect(result).toEqual({
           content: [{
@@ -308,7 +300,7 @@ describe('moveTask tool', () => {
         });
 
         expect(result.content[0].text).toBe('Task "Backlog task added on 2024-01-01" is already in backlog');
-        expect(mockCommitChanges).not.toHaveBeenCalled();
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
       });
 
       it('should handle task already in next week', async() => {
@@ -318,7 +310,7 @@ describe('moveTask tool', () => {
         });
 
         expect(result.content[0].text).toBe('Task "Simple next task" is already in next week');
-        expect(mockCommitChanges).not.toHaveBeenCalled();
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
       });
     });
 
@@ -334,7 +326,7 @@ describe('moveTask tool', () => {
         expect(result.content[0].text).toContain('No matching tasks found for "Nonexistent task"');
 
         // Verify no git commit
-        expect(mockCommitChanges).not.toHaveBeenCalled();
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
       });
 
       it('should handle ambiguous task identifier', async() => {
@@ -354,7 +346,7 @@ describe('moveTask tool', () => {
       });
 
       it('should handle git commit failure', async() => {
-        mockCommitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
+        gitUtils.commitChanges.mockRejectedValueOnce(new Error('Git commit failed'));
 
         const result = await handler({
           task_identifier: 'Simple current task',

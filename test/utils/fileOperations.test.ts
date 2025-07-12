@@ -303,6 +303,7 @@ describe('fileOperations', () => {
         writeFileSync(join(testDir, 'backlog.md'), content);
 
         const description = 'Task cancelled\nNo longer needed';
+
         addTaskToFile('backlog', 'Backlog', 'Cancelled task', description, 'closed');
 
         const result = readFileSync(join(testDir, 'backlog.md'), 'utf-8');

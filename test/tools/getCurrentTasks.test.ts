@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import { name, config, handler } from 'src/tools/getCurrentTasks';
-
-// Mock fileOperations module
-const mockReadFile = mock(() => 'default content');
-
-mock.module('src/utils/fileOperations', () => ({
-  readFile: mockReadFile,
-}));
+import * as fileOperations from 'src/utils/fileOperations';
 
 describe('getCurrentTasks tool', () => {
   beforeEach(() => {
-    mockReadFile.mockClear();
+    // Set up mocks for this test
+    spyOn(fileOperations, 'readFile').mockReturnValue('default content');
+  });
+
+  afterEach(() => {
+    // Clear all spies
+    mock.restore();
   });
 
   describe('tool metadata', () => {
@@ -32,11 +32,11 @@ describe('getCurrentTasks tool', () => {
       it('should return current file content in proper MCP format', () => {
         const mockContent = 'test file content';
 
-        mockReadFile.mockReturnValue(mockContent);
+        fileOperations.readFile.mockReturnValue(mockContent);
 
         const result = handler();
 
-        expect(mockReadFile).toHaveBeenCalledWith('current');
+        expect(fileOperations.readFile).toHaveBeenCalledWith('current');
         expect(result).toEqual({
           content: [{
             type: 'text',
@@ -50,7 +50,7 @@ describe('getCurrentTasks tool', () => {
       it('should handle Error objects', () => {
         const error = new Error('File not found');
 
-        mockReadFile.mockImplementation(() => {
+        fileOperations.readFile.mockImplementation(() => {
           throw error;
         });
 
@@ -66,7 +66,7 @@ describe('getCurrentTasks tool', () => {
       });
 
       it('should handle non-Error exceptions', () => {
-        mockReadFile.mockImplementation(() => {
+        fileOperations.readFile.mockImplementation(() => {
           throw 'String error';
         });
 
@@ -84,7 +84,7 @@ describe('getCurrentTasks tool', () => {
 
     describe('MCP response structure validation', () => {
       it('should always return content as array', () => {
-        mockReadFile.mockReturnValue('test content');
+        fileOperations.readFile.mockReturnValue('test content');
 
         const result = handler();
 
@@ -93,7 +93,7 @@ describe('getCurrentTasks tool', () => {
       });
 
       it('should always use type "text" for content items', () => {
-        mockReadFile.mockReturnValue('test content');
+        fileOperations.readFile.mockReturnValue('test content');
 
         const result = handler();
 
@@ -103,7 +103,7 @@ describe('getCurrentTasks tool', () => {
       it('should include text field in content items', () => {
         const testContent = 'test content';
 
-        mockReadFile.mockReturnValue(testContent);
+        fileOperations.readFile.mockReturnValue(testContent);
 
         const result = handler();
 
@@ -112,7 +112,7 @@ describe('getCurrentTasks tool', () => {
       });
 
       it('should not include isError in successful responses', () => {
-        mockReadFile.mockReturnValue('test content');
+        fileOperations.readFile.mockReturnValue('test content');
 
         const result = handler();
 
@@ -120,7 +120,7 @@ describe('getCurrentTasks tool', () => {
       });
 
       it('should include isError: true in error responses', () => {
-        mockReadFile.mockImplementation(() => {
+        fileOperations.readFile.mockImplementation(() => {
           throw new Error('test error');
         });
 
@@ -130,7 +130,7 @@ describe('getCurrentTasks tool', () => {
       });
 
       it('should maintain consistent response structure for errors', () => {
-        mockReadFile.mockImplementation(() => {
+        fileOperations.readFile.mockImplementation(() => {
           throw new Error('test error');
         });
 
@@ -146,12 +146,12 @@ describe('getCurrentTasks tool', () => {
 
     describe('file reading behavior', () => {
       it('should call readFile with correct filename', () => {
-        mockReadFile.mockReturnValue('content');
+        fileOperations.readFile.mockReturnValue('content');
 
         handler();
 
-        expect(mockReadFile).toHaveBeenCalledWith('current');
-        expect(mockReadFile).toHaveBeenCalledTimes(1);
+        expect(fileOperations.readFile).toHaveBeenCalledWith('current');
+        expect(fileOperations.readFile).toHaveBeenCalledTimes(1);
       });
     });
   });
