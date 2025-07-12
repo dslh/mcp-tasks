@@ -23,7 +23,7 @@ describe('addTaskToSection', () => {
       sampleContent,
       'Next Week',
       'Task with description',
-      'This is a detailed description'
+      'This is a detailed description',
     );
 
     expect(result).toContain('- [ ] Task with description');
@@ -83,14 +83,14 @@ describe('addTaskToSection', () => {
     const lines = result.split('\n');
     const thisWeekStart = lines.findIndex(line => line === '# This Week');
     const nextWeekStart = lines.findIndex(line => line === '# Next Week');
-    
+
     // Find the new task
     const newTaskIndex = lines.findIndex(line => line === '- [ ] Last task');
-    
+
     // New task should be between This Week section and Next Week section
     expect(newTaskIndex).toBeGreaterThan(thisWeekStart);
     expect(newTaskIndex).toBeLessThan(nextWeekStart);
-    
+
     // Should have empty line after the new task
     expect(lines[newTaskIndex + 1]).toBe('');
   });
@@ -124,7 +124,7 @@ describe('addTaskToSection', () => {
 
     const lines = result.split('\n');
     const taskIndex = lines.findIndex(line => line === '- [ ] Test task');
-    
+
     expect(lines[taskIndex + 1]).toBe('  Test description');
     expect(lines[taskIndex + 2]).toBe('');
   });
@@ -160,11 +160,11 @@ describe('addTaskToSection', () => {
 
     it('should create completed task with description', () => {
       const result = addTaskToSection(
-        sampleContent, 
-        'Next Week', 
-        'Complex completed task', 
-        'Already finished this', 
-        'completed'
+        sampleContent,
+        'Next Week',
+        'Complex completed task',
+        'Already finished this',
+        'completed',
       );
 
       expect(result).toContain('- [x] Complex completed task');
@@ -174,11 +174,11 @@ describe('addTaskToSection', () => {
     it('should create closed task with multiline description', () => {
       const description = 'Task was cancelled\nDue to changing priorities';
       const result = addTaskToSection(
-        sampleContent, 
-        'Backlog', 
-        'Cancelled task', 
-        description, 
-        'closed'
+        sampleContent,
+        'Backlog',
+        'Cancelled task',
+        description,
+        'closed',
       );
 
       expect(result).toContain('- [-] Cancelled task');

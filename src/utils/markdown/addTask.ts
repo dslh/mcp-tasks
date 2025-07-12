@@ -1,5 +1,5 @@
 import { parseMarkdownSections } from './parsing';
-import { type TaskStatus } from '../taskIdentifier';
+import type { TaskStatus } from '../taskIdentifier';
 
 function getTaskCheckbox(status: TaskStatus): string {
   switch (status) {

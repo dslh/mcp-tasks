@@ -127,7 +127,7 @@ Some other content`;
     const result = removeTask(sampleContent, 3);
 
     const lines = result.split('\n');
-    
+
     // Should not have empty gaps where the task was
     expect(lines.filter(line => line.trim() === '')).toHaveLength(1); // Only the original empty line
   });

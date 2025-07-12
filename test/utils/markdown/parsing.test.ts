@@ -14,7 +14,7 @@ Line 4`;
     const sections = parseMarkdownSections(content);
 
     expect(sections).toHaveLength(2);
-    
+
     expect(sections[0]).toEqual({
       title: 'First Section',
       content: ['Line 1', 'Line 2', ''],
@@ -32,14 +32,16 @@ Line 4`;
 
   it('should handle empty content', () => {
     const sections = parseMarkdownSections('');
+
     expect(sections).toHaveLength(0);
   });
 
   it('should handle content without sections', () => {
     const content = `Some text
 More text`;
-    
+
     const sections = parseMarkdownSections(content);
+
     expect(sections).toHaveLength(0);
   });
 
@@ -59,7 +61,7 @@ Content here`;
   });
 
   it('should handle section with no content', () => {
-    const content = `# Empty Section`;
+    const content = '# Empty Section';
 
     const sections = parseMarkdownSections(content);
 

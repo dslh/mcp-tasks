@@ -178,7 +178,7 @@ describe('updateTaskDescription', () => {
 
     const lines = result.split('\n');
     const taskIndex = lines.findIndex(line => line === '- [ ] Task without description');
-    
+
     expect(lines[taskIndex + 1]).toBe('  New description');
   });
 });
