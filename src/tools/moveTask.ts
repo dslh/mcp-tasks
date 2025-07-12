@@ -119,7 +119,7 @@ async function performTaskMove(
   removeTaskFromSource(task);
 
   // Add to destination
-  addTaskToFile(destinationInfo.file, destinationInfo.section, transformedText, description);
+  addTaskToFile(destinationInfo.file, destinationInfo.section, transformedText, description, task.status);
 
   const sourceLocation = sourceDestination.replace('_', ' ');
   const destLocation = destination.replace('_', ' ');

@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { getFilePath } from 'src/config';
 import { addTaskToSection } from './markdown';
+import type { TaskStatus } from './taskIdentifier';
 
 // eslint-disable-next-line no-unused-vars
 type ContentModifier = (content: string) => string;
@@ -38,8 +39,9 @@ export function addTaskToFile(
   sectionTitle: string,
   taskText: string,
   description?: string,
+  status: TaskStatus = 'new',
 ): void {
   changeFile(fileName, (content) =>
-    addTaskToSection(content, sectionTitle, taskText, description),
+    addTaskToSection(content, sectionTitle, taskText, description, status),
   );
 }

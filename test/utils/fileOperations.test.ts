@@ -224,6 +224,130 @@ describe('fileOperations', () => {
       expect(result).toContain('- [ ] Future task');
       expect(result).toContain('  For later');
     });
+
+    describe('status parameter', () => {
+      it('should add task with default new status', () => {
+        const content = `# Today
+- [ ] Existing task`;
+
+        writeFileSync(join(testDir, 'current.md'), content);
+
+        addTaskToFile('current', 'Today', 'Default task');
+
+        const result = readFileSync(join(testDir, 'current.md'), 'utf-8');
+
+        expect(result).toContain('- [ ] Default task');
+        expect(result).not.toContain('- [x] Default task');
+        expect(result).not.toContain('- [-] Default task');
+      });
+
+      it('should add task with explicit new status', () => {
+        const content = `# Today
+- [ ] Existing task`;
+
+        writeFileSync(join(testDir, 'current.md'), content);
+
+        addTaskToFile('current', 'Today', 'New task', undefined, 'new');
+
+        const result = readFileSync(join(testDir, 'current.md'), 'utf-8');
+
+        expect(result).toContain('- [ ] New task');
+      });
+
+      it('should add completed task', () => {
+        const content = `# Today
+- [ ] Existing task`;
+
+        writeFileSync(join(testDir, 'current.md'), content);
+
+        addTaskToFile('current', 'Today', 'Completed task', undefined, 'completed');
+
+        const result = readFileSync(join(testDir, 'current.md'), 'utf-8');
+
+        expect(result).toContain('- [x] Completed task');
+        expect(result).not.toContain('- [ ] Completed task');
+      });
+
+      it('should add closed task', () => {
+        const content = `# Today
+- [ ] Existing task`;
+
+        writeFileSync(join(testDir, 'current.md'), content);
+
+        addTaskToFile('current', 'Today', 'Closed task', undefined, 'closed');
+
+        const result = readFileSync(join(testDir, 'current.md'), 'utf-8');
+
+        expect(result).toContain('- [-] Closed task');
+        expect(result).not.toContain('- [ ] Closed task');
+      });
+
+      it('should add completed task with description', () => {
+        const content = `# Today
+- [ ] Existing task`;
+
+        writeFileSync(join(testDir, 'current.md'), content);
+
+        addTaskToFile('current', 'Today', 'Done task', 'This was finished', 'completed');
+
+        const result = readFileSync(join(testDir, 'current.md'), 'utf-8');
+
+        expect(result).toContain('- [x] Done task');
+        expect(result).toContain('  This was finished');
+      });
+
+      it('should add closed task with multiline description', () => {
+        const content = `# Backlog
+- [ ] Existing task`;
+
+        writeFileSync(join(testDir, 'backlog.md'), content);
+
+        const description = 'Task cancelled\nNo longer needed';
+        addTaskToFile('backlog', 'Backlog', 'Cancelled task', description, 'closed');
+
+        const result = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
+
+        expect(result).toContain('- [-] Cancelled task');
+        expect(result).toContain('  Task cancelled');
+        expect(result).toContain('  No longer needed');
+      });
+
+      it('should preserve existing tasks when adding different status tasks', () => {
+        const content = `# Today
+- [ ] Existing new task
+- [x] Existing completed task
+- [-] Existing closed task`;
+
+        writeFileSync(join(testDir, 'current.md'), content);
+
+        addTaskToFile('current', 'Today', 'Another completed task', undefined, 'completed');
+
+        const result = readFileSync(join(testDir, 'current.md'), 'utf-8');
+
+        // Should preserve all existing tasks
+        expect(result).toContain('- [ ] Existing new task');
+        expect(result).toContain('- [x] Existing completed task');
+        expect(result).toContain('- [-] Existing closed task');
+        // Should add new completed task
+        expect(result).toContain('- [x] Another completed task');
+      });
+
+      it('should work with all file types and statuses', () => {
+        // Test archive file with closed status
+        const content = `# Archive
+- [x] Old completed task`;
+
+        writeFileSync(join(testDir, 'archive.md'), content);
+
+        addTaskToFile('archive', 'Archive', 'Archived task', 'No longer relevant', 'closed');
+
+        const result = readFileSync(join(testDir, 'archive.md'), 'utf-8');
+
+        expect(result).toContain('- [-] Archived task');
+        expect(result).toContain('  No longer relevant');
+        expect(result).toContain('- [x] Old completed task');
+      });
+    });
   });
 
   describe('error handling', () => {

@@ -1,10 +1,23 @@
 import { parseMarkdownSections } from './parsing';
+import { type TaskStatus } from '../taskIdentifier';
+
+function getTaskCheckbox(status: TaskStatus): string {
+  switch (status) {
+    case 'completed':
+      return '- [x]';
+    case 'closed':
+      return '- [-]';
+    default:
+      return '- [ ]';
+  }
+}
 
 export function addTaskToSection(
   content: string,
   sectionTitle: string,
   taskText: string,
   description?: string,
+  status: TaskStatus = 'new',
 ): string {
   const sections = parseMarkdownSections(content);
   const targetSection = sections.find(section =>
@@ -16,7 +29,7 @@ export function addTaskToSection(
   }
 
   // Create the new task lines
-  const taskLines = [`- [ ] ${taskText}`];
+  const taskLines = [`${getTaskCheckbox(status)} ${taskText}`];
 
   if (description !== undefined && description !== '') {
     const descriptionLines = description.split('\n').map((line: string) => `  ${line}`);

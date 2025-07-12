@@ -128,4 +128,71 @@ describe('addTaskToSection', () => {
     expect(lines[taskIndex + 1]).toBe('  Test description');
     expect(lines[taskIndex + 2]).toBe('');
   });
+
+  describe('status parameter', () => {
+    it('should create new task with default new status', () => {
+      const result = addTaskToSection(sampleContent, 'This Week', 'Default task');
+
+      expect(result).toContain('- [ ] Default task');
+      expect(result).not.toContain('- [x] Default task');
+      expect(result).not.toContain('- [-] Default task');
+    });
+
+    it('should create new task with explicit new status', () => {
+      const result = addTaskToSection(sampleContent, 'This Week', 'New task', undefined, 'new');
+
+      expect(result).toContain('- [ ] New task');
+    });
+
+    it('should create completed task', () => {
+      const result = addTaskToSection(sampleContent, 'This Week', 'Completed task', undefined, 'completed');
+
+      expect(result).toContain('- [x] Completed task');
+      expect(result).not.toContain('- [ ] Completed task');
+    });
+
+    it('should create closed task', () => {
+      const result = addTaskToSection(sampleContent, 'This Week', 'Closed task', undefined, 'closed');
+
+      expect(result).toContain('- [-] Closed task');
+      expect(result).not.toContain('- [ ] Closed task');
+    });
+
+    it('should create completed task with description', () => {
+      const result = addTaskToSection(
+        sampleContent, 
+        'Next Week', 
+        'Complex completed task', 
+        'Already finished this', 
+        'completed'
+      );
+
+      expect(result).toContain('- [x] Complex completed task');
+      expect(result).toContain('  Already finished this');
+    });
+
+    it('should create closed task with multiline description', () => {
+      const description = 'Task was cancelled\nDue to changing priorities';
+      const result = addTaskToSection(
+        sampleContent, 
+        'Backlog', 
+        'Cancelled task', 
+        description, 
+        'closed'
+      );
+
+      expect(result).toContain('- [-] Cancelled task');
+      expect(result).toContain('  Task was cancelled');
+      expect(result).toContain('  Due to changing priorities');
+    });
+
+    it('should preserve existing tasks when adding different status tasks', () => {
+      const result = addTaskToSection(sampleContent, 'This Week', 'Completed task', undefined, 'completed');
+
+      // Should preserve original tasks
+      expect(result).toContain('- [ ] Existing task');
+      // Should add new completed task
+      expect(result).toContain('- [x] Completed task');
+    });
+  });
 });
