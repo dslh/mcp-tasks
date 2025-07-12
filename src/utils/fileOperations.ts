@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { getFilePath } from 'src/config';
+import { getFilePath } from '../config';
 import { addTaskToSection } from './markdown';
 import type { TaskStatus } from './taskIdentifier';
 
