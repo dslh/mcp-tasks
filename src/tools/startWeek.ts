@@ -1,6 +1,6 @@
 import { parseMarkdownSections, getTaskDescriptionLines } from '../utils/markdown';
 import { readFile, changeFile, appendToFile } from '../utils/fileOperations';
-import { commitChanges } from '../utils/git';
+import { hasUntrackedFiles, commitChanges } from '../utils/git';
 import { getCurrentDate, getArchiveWeekDate } from '../utils/dates';
 
 export const name = 'start_week';
@@ -80,7 +80,9 @@ function rebuildCurrentFile(
 
 async function performWeekTransition(): Promise<string> {
   // Step 1: Pre-backup commit
-  await commitChanges('Pre-start-week backup');
+  if (await hasUntrackedFiles()) {
+    await commitChanges('Pre-start-week backup');
+  }
 
   // Step 2: Parse current.md
   const currentContent = readFile('current');

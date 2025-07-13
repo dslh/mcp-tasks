@@ -55,6 +55,7 @@ describe('startWeek tool', () => {
 - [ ] Backlog task 2 added on 2024-01-02`);
 
     // Set up mocks for this test
+    spyOn(gitUtils, 'hasUntrackedFiles').mockResolvedValue(true);
     spyOn(gitUtils, 'commitChanges').mockResolvedValue();
     spyOn(dateUtils, 'getCurrentDate').mockReturnValue('2024-01-15');
     spyOn(dateUtils, 'getArchiveWeekDate').mockReturnValue('2024-01-08');
@@ -320,11 +321,21 @@ describe('startWeek tool', () => {
     });
 
     describe('git workflow', () => {
-      it('should make pre-backup commit before changes', async() => {
+      it('should make pre-backup commit before changes when there are untracked files', async() => {
         await handler();
 
         // First commit should be pre-backup
         expect(gitUtils.commitChanges).toHaveBeenNthCalledWith(1, 'Pre-start-week backup');
+      });
+
+      it('should skip pre-backup commit when there are no untracked files', async() => {
+        spyOn(gitUtils, 'hasUntrackedFiles').mockResolvedValue(false);
+
+        await handler();
+
+        // Should only make final commit
+        expect(gitUtils.commitChanges).toHaveBeenCalledTimes(1);
+        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Completed week transition to 2024-01-15');
       });
 
       it('should make final commit after changes', async() => {
@@ -344,6 +355,18 @@ describe('startWeek tool', () => {
 
         // Should not make second commit if first fails
         expect(gitUtils.commitChanges).toHaveBeenCalledTimes(1);
+      });
+
+      it('should handle hasUntrackedFiles failure', async() => {
+        spyOn(gitUtils, 'hasUntrackedFiles').mockRejectedValue(new Error('Git status failed'));
+
+        const result = await handler();
+
+        expect(result.isError).toBe(true);
+        expect(result.content[0].text).toContain('Error during week transition: Git status failed');
+
+        // Should not make any commits if hasUntrackedFiles fails
+        expect(gitUtils.commitChanges).toHaveBeenCalledTimes(0);
       });
 
       it('should handle git failure during final commit', async() => {
@@ -374,7 +397,7 @@ describe('startWeek tool', () => {
         expect(result.isError).toBe(true);
         expect(result.content[0].text).toContain('Error during week transition: Required sections not found in current.md');
 
-        // Should make pre-backup commit but not final commit
+        // Should make pre-backup commit but not final commit (assuming untracked files exist)
         expect(gitUtils.commitChanges).toHaveBeenCalledTimes(1);
         expect(gitUtils.commitChanges).toHaveBeenCalledWith('Pre-start-week backup');
       });
