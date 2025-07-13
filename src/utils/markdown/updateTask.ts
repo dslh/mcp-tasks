@@ -1,4 +1,5 @@
 import { getTaskDescriptionLines } from './parsing';
+import { getStatusChar } from '../taskStatus';
 
 export function updateTaskStatus(
   content: string,
@@ -13,7 +14,7 @@ export function updateTaskStatus(
   }
 
   // Replace the status in the checkbox
-  const statusChar = newStatus === 'completed' ? 'x' : '-';
+  const statusChar = getStatusChar(newStatus);
   const updatedLine = targetLine.replace(/^- \[[ x-]\]/, `- [${statusChar}]`);
 
   if (updatedLine === targetLine) {

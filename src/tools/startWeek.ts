@@ -3,6 +3,7 @@ import { readFile, changeFile, appendToFile } from '../utils/fileOperations';
 import { hasUntrackedFiles, commitChanges } from '../utils/git';
 import { getCurrentDate, getArchiveWeekDate } from '../utils/dates';
 import { createSuccessResponse, createErrorResponse } from '../utils/responses';
+import { parseStatusChar, isFinishedStatus } from '../utils/taskStatus';
 
 export const name = 'start_week';
 
@@ -23,8 +24,9 @@ function filterTasksByCompletion(sectionContent: string[]): { finished: string[]
     const taskMatch = line.match(/^- \[([ x-])\] /);
 
     if (taskMatch) {
-      const status = taskMatch[1];
-      const isFinished = status === 'x' || status === '-';
+      const statusChar = taskMatch[1];
+      const status = parseStatusChar(statusChar);
+      const isFinished = isFinishedStatus(status);
 
       // Collect this task and any description lines that follow
       const taskLines = [line];

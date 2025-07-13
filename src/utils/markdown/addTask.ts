@@ -1,16 +1,5 @@
 import { parseMarkdownSections } from './parsing';
-import type { TaskStatus } from '../taskIdentifier';
-
-function getTaskCheckbox(status: TaskStatus): string {
-  switch (status) {
-    case 'completed':
-      return '- [x]';
-    case 'closed':
-      return '- [-]';
-    default:
-      return '- [ ]';
-  }
-}
+import { getTaskCheckbox, type TaskStatus } from '../taskStatus';
 
 export function addTaskToSection(
   content: string,

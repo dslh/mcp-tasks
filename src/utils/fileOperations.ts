@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { getFilePath } from '../config';
 import { addTaskToSection } from './markdown';
-import type { TaskStatus } from './taskIdentifier';
+import type { TaskStatus } from './taskStatus';
 
 // eslint-disable-next-line no-unused-vars
 type ContentModifier = (content: string) => string;

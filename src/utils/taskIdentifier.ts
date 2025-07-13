@@ -1,7 +1,6 @@
 import { parseMarkdownSections } from './markdown';
 import { readFile } from './fileOperations';
-
-export type TaskStatus = 'new' | 'completed' | 'closed';
+import { parseStatusChar, type TaskStatus } from './taskStatus';
 
 export interface TaskMatch {
   file: 'current' | 'backlog';
@@ -19,20 +18,7 @@ function parseTaskLine(line: string): { taskText: string; status: TaskStatus } |
   }
 
   const [, statusChar, taskText] = taskMatch;
-
-  let status: TaskStatus;
-
-  switch (statusChar) {
-    case 'x':
-      status = 'completed';
-      break;
-    case '-':
-      status = 'closed';
-      break;
-    default:
-      status = 'new';
-      break;
-  }
+  const status = parseStatusChar(statusChar);
 
   return {
     taskText: taskText.trim(),

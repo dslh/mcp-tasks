@@ -4,6 +4,7 @@ import { updateTaskStatus } from '../utils/markdown';
 import { commitChanges } from '../utils/git';
 import { changeFile } from '../utils/fileOperations';
 import { createSuccessResponse, createErrorResponse } from '../utils/responses';
+import { getStatusDisplay } from '../utils/taskStatus';
 
 export const name = 'finish_task';
 
@@ -36,10 +37,9 @@ function checkTaskAlreadyInState(
 }
 
 function formatStatusMessage(taskText: string, status: 'completed' | 'closed'): string {
-  const statusText = status === 'completed' ? 'completed' : 'closed';
-  const statusIcon = status === 'completed' ? '[x]' : '[-]';
+  const statusDisplay = getStatusDisplay(status);
 
-  return `Successfully marked task "${taskText}" as ${statusText} ${statusIcon}`;
+  return `Successfully marked task "${taskText}" as ${statusDisplay}`;
 }
 
 export async function handler({
