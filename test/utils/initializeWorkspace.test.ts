@@ -67,7 +67,7 @@ describe('initializeWorkspace', () => {
       const backlogContent = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
       const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
 
-      expect(currentContent).toBe('# Last Week\n\n# This Week\n\n# Next Week\n');
+      expect(currentContent).toBe('# This Week\n\n# Next Week\n');
       expect(backlogContent).toBe('# Backlog\n');
       expect(archiveContent).toBe('# Archive\n');
     });
@@ -157,7 +157,7 @@ describe('initializeWorkspace', () => {
       expect(readFileSync(join(testDir, 'backlog.md'), 'utf-8')).toBe('existing backlog');
 
       // Verify missing files created with templates
-      expect(readFileSync(join(testDir, 'current.md'), 'utf-8')).toBe('# Last Week\n\n# This Week\n\n# Next Week\n');
+      expect(readFileSync(join(testDir, 'current.md'), 'utf-8')).toBe('# This Week\n\n# Next Week\n');
       expect(readFileSync(join(testDir, 'archive.md'), 'utf-8')).toBe('# Archive\n');
 
       expect(gitUtils.commitChanges).toHaveBeenCalledWith('Changes since last startup');
@@ -260,12 +260,10 @@ describe('initializeWorkspace', () => {
       const content = readFileSync(join(testDir, 'current.md'), 'utf-8');
       const lines = content.split('\n');
 
-      expect(lines[0]).toBe('# Last Week');
+      expect(lines[0]).toBe('# This Week');
       expect(lines[1]).toBe('');
-      expect(lines[2]).toBe('# This Week');
+      expect(lines[2]).toBe('# Next Week');
       expect(lines[3]).toBe('');
-      expect(lines[4]).toBe('# Next Week');
-      expect(lines[5]).toBe('');
     });
 
     it('should create simple templates for backlog and archive', async() => {

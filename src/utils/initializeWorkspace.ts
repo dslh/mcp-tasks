@@ -3,9 +3,7 @@ import { join } from 'path';
 import { getWorkingDirectory } from '../config';
 import { isGitRepo, initGitRepo, hasUntrackedFiles, commitChanges } from './git';
 
-const CURRENT_TEMPLATE = `# Last Week
-
-# This Week
+const CURRENT_TEMPLATE = `# This Week
 
 # Next Week
 `;

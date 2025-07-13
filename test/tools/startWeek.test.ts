@@ -17,16 +17,8 @@ describe('startWeek tool', () => {
     mkdirSync(testDir, { recursive: true });
     setWorkingDirectory(testDir);
 
-    // Create current.md with complete weekly structure
-    writeFileSync(join(testDir, 'current.md'), `# Last Week
-- [x] Completed last week task
-- [-] Closed last week task
-- [ ] Unfinished last week task
-- [x] Task with description from last week
-  Last week description
-  Multiple lines
-
-# This Week
+    // Create current.md with 2-section structure
+    writeFileSync(join(testDir, 'current.md'), `# This Week
 - [x] Completed this week task
 - [-] Closed this week task  
 - [ ] Unfinished this week task
@@ -78,7 +70,7 @@ describe('startWeek tool', () => {
     it('should export correct config structure', () => {
       expect(config).toEqual({
         title: 'Start Week',
-        description: 'Execute the weekly transition: archive last week, move current week to last week, next week to current week',
+        description: 'Execute the weekly transition: archive current week, move incomplete tasks and next week to current week',
         inputSchema: {},
       });
     });
@@ -107,19 +99,20 @@ describe('startWeek tool', () => {
         expect(gitUtils.commitChanges).toHaveBeenNthCalledWith(2, 'Completed week transition to 2024-01-15');
       });
 
-      it('should archive last week content to archive.md', async() => {
+      it('should archive this week content to archive.md', async() => {
         await handler();
 
         const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
 
-        // Should append new week section
+        // Should append new week section with entire "This Week" content
         expect(archiveContent).toContain('# Week of 2024-01-08');
-        expect(archiveContent).toContain('- [x] Completed last week task');
-        expect(archiveContent).toContain('- [-] Closed last week task');
-        expect(archiveContent).toContain('- [ ] Unfinished last week task');
-        expect(archiveContent).toContain('- [x] Task with description from last week');
-        expect(archiveContent).toContain('  Last week description');
-        expect(archiveContent).toContain('  Multiple lines');
+        expect(archiveContent).toContain('- [x] Completed this week task');
+        expect(archiveContent).toContain('- [-] Closed this week task');
+        expect(archiveContent).toContain('- [ ] Unfinished this week task');
+        expect(archiveContent).toContain('- [ ] Another unfinished task');
+        expect(archiveContent).toContain('- [x] This week task with description');
+        expect(archiveContent).toContain('  This week description');
+        expect(archiveContent).toContain('  Details here');
 
         // Should preserve existing archive content
         expect(archiveContent).toContain('# Week of 2024-01-01');
@@ -133,37 +126,17 @@ describe('startWeek tool', () => {
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
         const sections = currentContent.split('#').filter(s => s.trim());
 
-        // Should have exactly 3 sections
-        expect(sections).toHaveLength(3);
+        // Should have exactly 2 sections
+        expect(sections).toHaveLength(2);
 
         // Verify section headers
-        expect(currentContent).toContain('# Last Week');
         expect(currentContent).toContain('# This Week');
         expect(currentContent).toContain('# Next Week');
       });
     });
 
     describe('task filtering and transitions', () => {
-      it('should move completed/closed tasks from This Week to Last Week', async() => {
-        await handler();
-
-        const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
-        const lines = currentContent.split('\n');
-
-        // Find Last Week section
-        const lastWeekStart = lines.findIndex(line => line === '# Last Week');
-        const thisWeekStart = lines.findIndex(line => line === '# This Week');
-        const lastWeekLines = lines.slice(lastWeekStart + 1, thisWeekStart);
-
-        // Should contain completed/closed tasks from this week
-        expect(lastWeekLines.join('\n')).toContain('- [x] Completed this week task');
-        expect(lastWeekLines.join('\n')).toContain('- [-] Closed this week task');
-        expect(lastWeekLines.join('\n')).toContain('- [x] This week task with description');
-        expect(lastWeekLines.join('\n')).toContain('  This week description');
-        expect(lastWeekLines.join('\n')).toContain('  Details here');
-      });
-
-      it('should move unfinished tasks from This Week to This Week (preserve)', async() => {
+      it('should move incomplete tasks and next week tasks to new This Week', async() => {
         await handler();
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
@@ -173,32 +146,22 @@ describe('startWeek tool', () => {
         const thisWeekStart = lines.findIndex(line => line === '# This Week');
         const nextWeekStart = lines.findIndex(line => line === '# Next Week');
         const thisWeekLines = lines.slice(thisWeekStart + 1, nextWeekStart);
+        const thisWeekContent = thisWeekLines.join('\n');
 
-        // Should contain unfinished tasks from previous This Week
-        expect(thisWeekLines.join('\n')).toContain('- [ ] Unfinished this week task');
-        expect(thisWeekLines.join('\n')).toContain('- [ ] Another unfinished task');
+        // Should contain incomplete tasks from previous This Week
+        expect(thisWeekContent).toContain('- [ ] Unfinished this week task');
+        expect(thisWeekContent).toContain('- [ ] Another unfinished task');
 
-        // Should NOT contain completed/closed tasks
-        expect(thisWeekLines.join('\n')).not.toContain('- [x] Completed this week task');
-        expect(thisWeekLines.join('\n')).not.toContain('- [-] Closed this week task');
-      });
+        // Should contain all tasks from previous Next Week
+        expect(thisWeekContent).toContain('- [ ] Next week task 1');
+        expect(thisWeekContent).toContain('- [ ] Next week task 2');
+        expect(thisWeekContent).toContain('- [ ] Next week task with description');
+        expect(thisWeekContent).toContain('  Next week description');
 
-      it('should move tasks from Next Week to This Week', async() => {
-        await handler();
-
-        const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
-        const lines = currentContent.split('\n');
-
-        // Find This Week section
-        const thisWeekStart = lines.findIndex(line => line === '# This Week');
-        const nextWeekStart = lines.findIndex(line => line === '# Next Week');
-        const thisWeekLines = lines.slice(thisWeekStart + 1, nextWeekStart);
-
-        // Should contain tasks from previous Next Week
-        expect(thisWeekLines.join('\n')).toContain('- [ ] Next week task 1');
-        expect(thisWeekLines.join('\n')).toContain('- [ ] Next week task 2');
-        expect(thisWeekLines.join('\n')).toContain('- [ ] Next week task with description');
-        expect(thisWeekLines.join('\n')).toContain('  Next week description');
+        // Should NOT contain completed/closed tasks (they're archived)
+        expect(thisWeekContent).not.toContain('- [x] Completed this week task');
+        expect(thisWeekContent).not.toContain('- [-] Closed this week task');
+        expect(thisWeekContent).not.toContain('- [x] This week task with description');
       });
 
       it('should leave Next Week section empty after transition', async() => {
@@ -224,21 +187,16 @@ describe('startWeek tool', () => {
 
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
 
-        // Check Last Week section (moved from This Week)
-        expect(currentContent).toContain('- [x] This week task with description');
-        expect(currentContent).toContain('  This week description');
-        expect(currentContent).toContain('  Details here');
-
-        // Check This Week section (moved from Next Week)
+        // Check This Week section (should have tasks from Next Week)
         expect(currentContent).toContain('- [ ] Next week task with description');
         expect(currentContent).toContain('  Next week description');
 
-        // Check archive for Last Week descriptions
+        // Check archive for archived This Week descriptions
         const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
 
-        expect(archiveContent).toContain('- [x] Task with description from last week');
-        expect(archiveContent).toContain('  Last week description');
-        expect(archiveContent).toContain('  Multiple lines');
+        expect(archiveContent).toContain('- [x] This week task with description');
+        expect(archiveContent).toContain('  This week description');
+        expect(archiveContent).toContain('  Details here');
       });
 
       it('should handle tasks without descriptions correctly', async() => {
@@ -247,7 +205,6 @@ describe('startWeek tool', () => {
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
 
         // Tasks without descriptions should still be moved properly
-        expect(currentContent).toContain('- [x] Completed this week task');
         expect(currentContent).toContain('- [ ] Unfinished this week task');
         expect(currentContent).toContain('- [ ] Next week task 1');
       });
@@ -283,7 +240,6 @@ describe('startWeek tool', () => {
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
 
         // Should have proper markdown structure
-        expect(currentContent.split('# Last Week')).toHaveLength(2);
         expect(currentContent.split('# This Week')).toHaveLength(2);
         expect(currentContent.split('# Next Week')).toHaveLength(2);
 
@@ -385,28 +341,9 @@ describe('startWeek tool', () => {
     });
 
     describe('error scenarios', () => {
-      it('should handle missing Last Week section', async() => {
-        writeFileSync(join(testDir, 'current.md'), `# This Week
-- [ ] Task 1
-
-# Next Week  
-- [ ] Task 2`);
-
-        const result = await handler();
-
-        expect(result.isError).toBe(true);
-        expect(result.content[0].text).toContain('Error during week transition: Required sections not found in current.md');
-
-        // Should make pre-backup commit but not final commit (assuming untracked files exist)
-        expect(gitUtils.commitChanges).toHaveBeenCalledTimes(1);
-        expect(gitUtils.commitChanges).toHaveBeenCalledWith('Pre-start-week backup');
-      });
 
       it('should handle missing This Week section', async() => {
-        writeFileSync(join(testDir, 'current.md'), `# Last Week
-- [x] Task 1
-
-# Next Week
+        writeFileSync(join(testDir, 'current.md'), `# Next Week
 - [ ] Task 2`);
 
         const result = await handler();
@@ -416,10 +353,7 @@ describe('startWeek tool', () => {
       });
 
       it('should handle missing Next Week section', async() => {
-        writeFileSync(join(testDir, 'current.md'), `# Last Week
-- [x] Task 1
-
-# This Week
+        writeFileSync(join(testDir, 'current.md'), `# This Week
 - [ ] Task 2`);
 
         const result = await handler();
@@ -441,9 +375,7 @@ describe('startWeek tool', () => {
 
     describe('edge cases', () => {
       it('should handle empty sections gracefully', async() => {
-        writeFileSync(join(testDir, 'current.md'), `# Last Week
-
-# This Week
+        writeFileSync(join(testDir, 'current.md'), `# This Week
 
 # Next Week
 `);
@@ -455,16 +387,12 @@ describe('startWeek tool', () => {
         // Should create proper structure even with empty sections
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
 
-        expect(currentContent).toContain('# Last Week');
         expect(currentContent).toContain('# This Week');
         expect(currentContent).toContain('# Next Week');
       });
 
       it('should handle sections with only completed tasks', async() => {
-        writeFileSync(join(testDir, 'current.md'), `# Last Week
-- [x] All completed
-
-# This Week
+        writeFileSync(join(testDir, 'current.md'), `# This Week
 - [x] All done task 1
 - [-] All done task 2
 
@@ -476,26 +404,22 @@ describe('startWeek tool', () => {
         const currentContent = readFileSync(join(testDir, 'current.md'), 'utf-8');
         const lines = currentContent.split('\n');
 
-        // Last Week should have the completed tasks from This Week
-        const lastWeekStart = lines.findIndex(line => line === '# Last Week');
+        // This Week should have the Next Week tasks (no incomplete tasks to carry over)
         const thisWeekStart = lines.findIndex(line => line === '# This Week');
-        const lastWeekLines = lines.slice(lastWeekStart + 1, thisWeekStart);
-
-        expect(lastWeekLines.join('\n')).toContain('- [x] All done task 1');
-        expect(lastWeekLines.join('\n')).toContain('- [-] All done task 2');
-
-        // This Week should have the Next Week tasks
         const nextWeekStart = lines.findIndex(line => line === '# Next Week');
         const thisWeekLines = lines.slice(thisWeekStart + 1, nextWeekStart);
 
         expect(thisWeekLines.join('\n')).toContain('- [ ] Future task');
+
+        // Archive should contain the completed tasks
+        const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
+
+        expect(archiveContent).toContain('- [x] All done task 1');
+        expect(archiveContent).toContain('- [-] All done task 2');
       });
 
       it('should handle sections with only unfinished tasks', async() => {
-        writeFileSync(join(testDir, 'current.md'), `# Last Week
-- [ ] Unfinished last week
-
-# This Week
+        writeFileSync(join(testDir, 'current.md'), `# This Week
 - [ ] Unfinished task 1
 - [ ] Unfinished task 2
 

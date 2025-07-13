@@ -7,7 +7,7 @@ export const name = 'start_week';
 
 export const config = {
   title: 'Start Week',
-  description: 'Execute the weekly transition: archive last week, move current week to last week, next week to current week',
+  description: 'Execute the weekly transition: archive current week, move incomplete tasks and next week to current week',
   inputSchema: {},
 };
 
@@ -49,26 +49,20 @@ function filterTasksByCompletion(sectionContent: string[]): { finished: string[]
   return { finished, unfinished };
 }
 
-function addWeekToArchive(archiveDate: string, lastWeekContent: string[]): void {
+function addWeekToArchive(archiveDate: string, thisWeekContent: string[]): void {
   const sectionTitle = `Week of ${archiveDate}`;
-  const newSection = [`# ${sectionTitle}`, ...lastWeekContent].join('\n');
+  const newSection = [`# ${sectionTitle}`, ...thisWeekContent].join('\n');
 
   appendToFile('archive', newSection);
 }
 
 function rebuildCurrentFile(
-  lastWeekFinished: string[],
-  thisWeekUnfinished: string[],
-  nextWeekTasks: string[],
+  newThisWeekTasks: string[],
 ): void {
   changeFile('current', () => {
     const sections = [
-      '# Last Week',
-      ...lastWeekFinished,
-      '',
       '# This Week',
-      ...thisWeekUnfinished,
-      ...nextWeekTasks,
+      ...newThisWeekTasks,
       '',
       '# Next Week',
       '',
@@ -88,31 +82,29 @@ async function performWeekTransition(): Promise<string> {
   const currentContent = readFile('current');
   const sections = parseMarkdownSections(currentContent);
 
-  const lastWeekSection = sections.find(s => s.title === 'Last Week');
   const thisWeekSection = sections.find(s => s.title === 'This Week');
   const nextWeekSection = sections.find(s => s.title === 'Next Week');
 
-  if (!lastWeekSection || !thisWeekSection || !nextWeekSection) {
+  if (!thisWeekSection || !nextWeekSection) {
     throw new Error('Required sections not found in current.md');
   }
 
-  // Step 3: Move "Last Week" to archive
+  // Step 3: Copy "This Week" to archive (entire section for record keeping)
   const archiveDate = getArchiveWeekDate();
 
-  addWeekToArchive(archiveDate, lastWeekSection.content);
+  addWeekToArchive(archiveDate, thisWeekSection.content);
 
   // Step 4: Filter "This Week" tasks by completion
-  const { finished: thisWeekFinished, unfinished: thisWeekUnfinished } =
+  const { unfinished: thisWeekUnfinished } =
     filterTasksByCompletion(thisWeekSection.content);
 
-  // Step 5: Rebuild current.md
-  rebuildCurrentFile(
-    thisWeekFinished,
-    thisWeekUnfinished,
-    nextWeekSection.content,
-  );
+  // Step 5: Combine incomplete tasks with next week tasks for new "This Week"
+  const newThisWeekTasks = [...thisWeekUnfinished, ...nextWeekSection.content];
 
-  // Step 6: Final commit
+  // Step 6: Rebuild current.md
+  rebuildCurrentFile(newThisWeekTasks);
+
+  // Step 7: Final commit
   const today = getCurrentDate();
 
   await commitChanges(`Completed week transition to ${today}`);

@@ -10,7 +10,7 @@ This document specifies the requirements for a Model Context Protocol (MCP) serv
 
 The system manages three markdown files:
 
-1. **`current.md`** - Active tasks across three time periods
+1. **`current.md`** - Active tasks across two time periods
 2. **`backlog.md`** - Future tasks with creation dates
 3. **`archive.md`** - Completed weekly sections
 
@@ -18,12 +18,6 @@ The system manages three markdown files:
 
 #### Current Tasks File (`current.md`)
 ```markdown
-# Last Week
-- [x] Completed task
-- [-] Closed/abandoned task
-  Some description text for context
-- [ ] Unfinished task
-
 # This Week  
 - [ ] Active task
 - [x] Completed task
@@ -133,14 +127,12 @@ The system manages three markdown files:
 
 **Behavior**:
 1. Create git commit with message "Pre-start-week backup"
-2. Move "Last Week" section to archive.md with week date
-3. Move finished tasks from "This Week" to "Last Week" section
-4. Keep unfinished tasks in "This Week" 
-5. Move all tasks from "Next Week" to "This Week"
-6. Clear "Next Week" section
-7. Create git commit with message "Completed week transition to [current date]"
+2. Copy "This Week" section to archive.md with week date (for record keeping)
+3. Move incomplete tasks from "This Week" and all tasks from "Next Week" to new "This Week" section
+4. Clear "Next Week" section
+5. Create git commit with message "Completed week transition to [current date]"
 
-"Last Week" section gets moved to archive.md under the heading "Week of YYYY-MM-DD", with the date set to the Monday of that week. If a section with matching title already exists we assume the tool has already run this week, and abort.
+The entire "This Week" section gets copied to archive.md under the heading "Week of YYYY-MM-DD", with the date set to the Monday of that week. If a section with matching title already exists we assume the tool has already run this week, and abort.
 
 **Returns**: Full content of the current.md file
 

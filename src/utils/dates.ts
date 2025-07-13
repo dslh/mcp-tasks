@@ -7,8 +7,8 @@ export function getCurrentDate(): string {
 /**
  * Returns the Monday date of the week that should be archived during week transition.
  *
- * This calculates the Monday of the week that was "last week" two weeks ago.
- * The logic finds the last Thursday, then goes back 10 more days to get the
+ * This calculates the Monday of the current week being archived.
+ * The logic finds the last Thursday, then goes back 3 more days to get the
  * Monday of the week to archive.
  *
  * @returns Date string in YYYY-MM-DD format
@@ -18,10 +18,10 @@ export function getArchiveWeekDate(): string {
   const currentDay = today.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
   const daysToLastThursday = currentDay >= 4 ? currentDay - 4 : currentDay + 3;
 
-  // Get Monday of the week to archive: today - daysToLastThursday - 10
+  // Get Monday of the week to archive: today - daysToLastThursday - 3
   const archiveMonday = new Date(today);
 
-  archiveMonday.setDate(today.getDate() - daysToLastThursday - 10);
+  archiveMonday.setDate(today.getDate() - daysToLastThursday - 3);
 
   // Format as YYYY-MM-DD
   const year = archiveMonday.getFullYear();
