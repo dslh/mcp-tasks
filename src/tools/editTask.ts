@@ -4,6 +4,7 @@ import { updateTaskText, updateTaskDescription } from '../utils/markdown';
 import { getCurrentDate } from '../utils/dates';
 import { commitChanges } from '../utils/git';
 import { changeFile } from '../utils/fileOperations';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses';
 
 export const name = 'edit_task';
 
@@ -103,21 +104,8 @@ export async function handler({
 
     await commitChanges(commitMessage);
 
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Successfully updated task "${task.taskText}" - ${updateMessage}`,
-      }],
-    };
+    return createSuccessResponse(`Successfully updated task "${task.taskText}" - ${updateMessage}`);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Error editing task: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponse('editing task', error);
   }
 }

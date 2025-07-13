@@ -1,4 +1,5 @@
 import { readFile } from '../utils/fileOperations';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses';
 
 export const name = 'get_current_tasks';
 
@@ -12,21 +13,8 @@ export function handler() {
   try {
     const content = readFile('current');
 
-    return {
-      content: [{
-        type: 'text' as const,
-        text: content,
-      }],
-    };
+    return createSuccessResponse(content);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Error reading current task list: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponse('reading current task list', error);
   }
 }

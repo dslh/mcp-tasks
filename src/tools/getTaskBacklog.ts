@@ -1,4 +1,5 @@
 import { readFile } from '../utils/fileOperations';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses';
 
 export const name = 'get_task_backlog';
 
@@ -12,21 +13,8 @@ export function handler() {
   try {
     const content = readFile('backlog');
 
-    return {
-      content: [{
-        type: 'text' as const,
-        text: content,
-      }],
-    };
+    return createSuccessResponse(content);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Error reading task backlog: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponse('reading task backlog', error);
   }
 }

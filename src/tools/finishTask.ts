@@ -3,6 +3,7 @@ import { validateTaskMatch, type TaskMatch } from '../utils/taskIdentifier';
 import { updateTaskStatus } from '../utils/markdown';
 import { commitChanges } from '../utils/git';
 import { changeFile } from '../utils/fileOperations';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses';
 
 export const name = 'finish_task';
 
@@ -53,12 +54,7 @@ export async function handler({
     const alreadyInStateMessage = checkTaskAlreadyInState(task, status);
 
     if (alreadyInStateMessage !== null) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: alreadyInStateMessage,
-        }],
-      };
+      return createSuccessResponse(alreadyInStateMessage);
     }
 
     updateTaskInFile(task.file, task.lineNumber, status);
@@ -67,21 +63,8 @@ export async function handler({
 
     await commitChanges(commitMessage);
 
-    return {
-      content: [{
-        type: 'text' as const,
-        text: formatStatusMessage(task.taskText, status),
-      }],
-    };
+    return createSuccessResponse(formatStatusMessage(task.taskText, status));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Error finishing task: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponse('finishing task', error);
   }
 }

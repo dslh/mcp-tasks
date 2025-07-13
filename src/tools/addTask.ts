@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { getCurrentDate } from '../utils/dates';
 import { commitChanges } from '../utils/git';
 import { addTaskToFile } from '../utils/fileOperations';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses';
 
 export const name = 'add_task';
 
@@ -61,21 +62,8 @@ export async function handler({
 
     await commitChanges(`Added task: ${task_text}`);
 
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Successfully added task "${task_text}" to ${taskTarget.sectionTitle}`,
-      }],
-    };
+    return createSuccessResponse(`Successfully added task "${task_text}" to ${taskTarget.sectionTitle}`);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Error adding task: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponse('adding task', error);
   }
 }

@@ -2,6 +2,7 @@ import { parseMarkdownSections, getTaskDescriptionLines } from '../utils/markdow
 import { readFile, changeFile, appendToFile } from '../utils/fileOperations';
 import { hasUntrackedFiles, commitChanges } from '../utils/git';
 import { getCurrentDate, getArchiveWeekDate } from '../utils/dates';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses';
 
 export const name = 'start_week';
 
@@ -116,21 +117,8 @@ export async function handler() {
   try {
     const successMessage = await performWeekTransition();
 
-    return {
-      content: [{
-        type: 'text' as const,
-        text: successMessage,
-      }],
-    };
+    return createSuccessResponse(successMessage);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Error during week transition: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponse('during week transition', error);
   }
 }

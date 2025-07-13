@@ -4,6 +4,7 @@ import { removeTask, getTaskDescriptionLines } from '../utils/markdown';
 import { getCurrentDate } from '../utils/dates';
 import { commitChanges } from '../utils/git';
 import { addTaskToFile, changeFile, readFile } from '../utils/fileOperations';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses';
 
 export const name = 'move_task';
 
@@ -142,31 +143,13 @@ export async function handler({
     const alreadyAtDestination = checkTaskAlreadyAtDestination(task, destination);
 
     if (alreadyAtDestination !== null) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: alreadyAtDestination,
-        }],
-      };
+      return createSuccessResponse(alreadyAtDestination);
     }
 
     const successMessage = await performTaskMove(task, destination);
 
-    return {
-      content: [{
-        type: 'text' as const,
-        text: successMessage,
-      }],
-    };
+    return createSuccessResponse(successMessage);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: `Error moving task: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponse('moving task', error);
   }
 }
