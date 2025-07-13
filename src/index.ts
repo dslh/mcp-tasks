@@ -17,11 +17,11 @@ import * as taskBacklog from './resources/taskBacklog';
 
 async function main() {
   const args = process.argv.slice(2);
-  const workingDir = args[0];
+  const workingDir = process.env.MCP_TASKS_WD || args[0];
 
   if (!workingDir) {
     console.error('Error: Working directory parameter is required');
-    console.error('Usage: mcp-tasks <working-directory>');
+    console.error('Usage: mcp-tasks <working-directory> or set MCP_TASKS_WD environment variable');
     process.exit(1);
   }
 
