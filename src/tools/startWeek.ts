@@ -72,6 +72,23 @@ function addWeekToArchive(archiveDate: string, thisWeekContent: string[]): void 
   appendToFile('archive', newSection);
 }
 
+function formatThisWeekSection(): string {
+  try {
+    const currentContent = readFile('current');
+    const sections = parseMarkdownSections(currentContent);
+    const thisWeekSection = sections.find(s => s.title === 'This Week');
+
+    if (!thisWeekSection) {
+      return '';
+    }
+
+    return ['# This Week', ...thisWeekSection.content].join('\n');
+  } catch {
+    // If current file can't be read, return empty string
+    return '';
+  }
+}
+
 function rebuildCurrentFile(
   newThisWeekTasks: string[],
 ): void {
@@ -93,7 +110,10 @@ async function performWeekTransition(): Promise<string> {
   const archiveDate = getArchiveWeekDate();
 
   if (checkIfWeekAlreadyArchived(archiveDate)) {
-    return `Week of ${archiveDate} has already been archived. No changes made.`;
+    const currentThisWeek = formatThisWeekSection();
+    const message = `Week of ${archiveDate} has already been archived. No changes made.`;
+
+    return currentThisWeek ? `${message}\n\n${currentThisWeek}` : message;
   }
 
   // Step 2: Pre-backup commit
@@ -130,7 +150,10 @@ async function performWeekTransition(): Promise<string> {
 
   await commitChanges(`Completed week transition to ${today}`);
 
-  return `Successfully completed week transition. Archived week of ${archiveDate}.`;
+  const currentThisWeek = formatThisWeekSection();
+  const message = `Successfully completed week transition. Archived week of ${archiveDate}.`;
+
+  return currentThisWeek ? `${message}\n\n${currentThisWeek}` : message;
 }
 
 export async function handler() {

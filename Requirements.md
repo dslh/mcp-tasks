@@ -138,7 +138,7 @@ The system manages three markdown files:
 
 The entire "This Week" section gets copied to archive.md under the heading "Week of YYYY-MM-DD", with the date set to the Monday of that week.
 
-**Returns**: Success message indicating either completion of transition or that the week was already archived
+**Returns**: Success message indicating either completion of transition or that the week was already archived, followed by the current "This Week" section content
 
 ## Task Identification Strategy
 

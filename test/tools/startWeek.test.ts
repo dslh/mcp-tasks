@@ -85,11 +85,11 @@ describe('startWeek tool', () => {
       it('should complete full weekly transition workflow', async() => {
         const result = await handler();
 
-        // Verify success response
+        // Verify success response with This Week section
         expect(result).toEqual({
           content: [{
             type: 'text',
-            text: 'Successfully completed week transition. Archived week of 2024-01-08.',
+            text: 'Successfully completed week transition. Archived week of 2024-01-08.\n\n# This Week\n- [ ] Unfinished this week task\n- [ ] Another unfinished task\n\n- [ ] Next week task 1\n- [ ] Next week task 2\n- [ ] Next week task with description\n  Next week description\n',
           }],
         });
 
@@ -272,7 +272,8 @@ describe('startWeek tool', () => {
 
         const result = await handler();
 
-        expect(result.content[0].text).toBe('Successfully completed week transition. Archived week of 2024-03-04.');
+        expect(result.content[0].text).toContain('Successfully completed week transition. Archived week of 2024-03-04.');
+        expect(result.content[0].text).toContain('# This Week');
       });
     });
 
@@ -448,12 +449,8 @@ describe('startWeek tool', () => {
         // First call should complete normally
         const result1 = await handler();
 
-        expect(result1).toEqual({
-          content: [{
-            type: 'text',
-            text: 'Successfully completed week transition. Archived week of 2024-01-08.',
-          }],
-        });
+        expect(result1.content[0].text).toContain('Successfully completed week transition. Archived week of 2024-01-08.');
+        expect(result1.content[0].text).toContain('# This Week');
 
         // Reset git mocks for second call but keep date mocks
         const gitMocks = {
@@ -468,12 +465,8 @@ describe('startWeek tool', () => {
         // Second call should detect existing archive and skip operations
         const result2 = await handler();
 
-        expect(result2).toEqual({
-          content: [{
-            type: 'text',
-            text: 'Week of 2024-01-08 has already been archived. No changes made.',
-          }],
-        });
+        expect(result2.content[0].text).toContain('Week of 2024-01-08 has already been archived. No changes made.');
+        expect(result2.content[0].text).toContain('# This Week');
 
         // Should not make any git commits on second call
         expect(gitUtils.commitChanges).not.toHaveBeenCalled();
@@ -488,12 +481,8 @@ describe('startWeek tool', () => {
 
         const result = await handler();
 
-        expect(result).toEqual({
-          content: [{
-            type: 'text',
-            text: 'Week of 2024-01-08 has already been archived. No changes made.',
-          }],
-        });
+        expect(result.content[0].text).toContain('Week of 2024-01-08 has already been archived. No changes made.');
+        expect(result.content[0].text).toContain('# This Week');
       });
 
       it('should return success message when skipping duplicate run', async() => {
@@ -507,7 +496,8 @@ describe('startWeek tool', () => {
 
         const result = await handler();
 
-        expect(result.content[0].text).toBe('Week of 2024-01-08 has already been archived. No changes made.');
+        expect(result.content[0].text).toContain('Week of 2024-01-08 has already been archived. No changes made.');
+        expect(result.content[0].text).toContain('# This Week');
         expect(result).not.toHaveProperty('isError');
       });
 
@@ -552,7 +542,8 @@ describe('startWeek tool', () => {
         const result = await handler();
 
         // Should proceed with normal operation since no archive exists
-        expect(result.content[0].text).toBe('Successfully completed week transition. Archived week of 2024-01-08.');
+        expect(result.content[0].text).toContain('Successfully completed week transition. Archived week of 2024-01-08.');
+        expect(result.content[0].text).toContain('# This Week');
         expect(result).not.toHaveProperty('isError');
       });
 
@@ -560,7 +551,8 @@ describe('startWeek tool', () => {
         // Archive has different week, should proceed normally
         const result = await handler();
 
-        expect(result.content[0].text).toBe('Successfully completed week transition. Archived week of 2024-01-08.');
+        expect(result.content[0].text).toContain('Successfully completed week transition. Archived week of 2024-01-08.');
+        expect(result.content[0].text).toContain('# This Week');
         expect(result).not.toHaveProperty('isError');
 
         // Should have made commits for normal operation
