@@ -126,15 +126,19 @@ The system manages three markdown files:
 **Parameters**: None
 
 **Behavior**:
-1. Create git commit with message "Pre-start-week backup"
-2. Copy "This Week" section to archive.md with week date (for record keeping)
-3. Move incomplete tasks from "This Week" and all tasks from "Next Week" to new "This Week" section
-4. Clear "Next Week" section
-5. Create git commit with message "Completed week transition to [current date]"
+1. Check if the current week has already been archived (idempotency check)
+2. If week already archived, return success message and skip all operations
+3. Create git commit with message "Pre-start-week backup"
+4. Copy "This Week" section to archive.md with week date (for record keeping)
+5. Move incomplete tasks from "This Week" and all tasks from "Next Week" to new "This Week" section
+6. Clear "Next Week" section
+7. Create git commit with message "Completed week transition to [current date]"
 
-The entire "This Week" section gets copied to archive.md under the heading "Week of YYYY-MM-DD", with the date set to the Monday of that week. If a section with matching title already exists we assume the tool has already run this week, and abort.
+**Idempotency**: The tool checks archive.md for an existing section with the heading "Week of YYYY-MM-DD" matching the current week's date. If found, the tool returns a success message and performs no file modifications or git operations. This ensures subsequent calls within the same week have no effect.
 
-**Returns**: Full content of the current.md file
+The entire "This Week" section gets copied to archive.md under the heading "Week of YYYY-MM-DD", with the date set to the Monday of that week.
+
+**Returns**: Success message indicating either completion of transition or that the week was already archived
 
 ## Task Identification Strategy
 

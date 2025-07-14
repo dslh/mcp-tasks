@@ -443,6 +443,131 @@ describe('startWeek tool', () => {
 
     });
 
+    describe('idempotency', () => {
+      it('should be idempotent when called multiple times in same week', async() => {
+        // First call should complete normally
+        const result1 = await handler();
+
+        expect(result1).toEqual({
+          content: [{
+            type: 'text',
+            text: 'Successfully completed week transition. Archived week of 2024-01-08.',
+          }],
+        });
+
+        // Reset git mocks for second call but keep date mocks
+        const gitMocks = {
+          hasUntrackedFiles: spyOn(gitUtils, 'hasUntrackedFiles').mockResolvedValue(true),
+          commitChanges: spyOn(gitUtils, 'commitChanges').mockResolvedValue(),
+        };
+
+        // Clear previous git mock calls for clean counting
+        gitMocks.hasUntrackedFiles.mockClear();
+        gitMocks.commitChanges.mockClear();
+
+        // Second call should detect existing archive and skip operations
+        const result2 = await handler();
+
+        expect(result2).toEqual({
+          content: [{
+            type: 'text',
+            text: 'Week of 2024-01-08 has already been archived. No changes made.',
+          }],
+        });
+
+        // Should not make any git commits on second call
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
+      });
+
+      it('should detect existing archive section and skip processing', async() => {
+        // Add the current week to archive before running
+        const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
+        const newArchiveContent = `${archiveContent  }\n\n# Week of 2024-01-08\n- [x] Already archived task`;
+
+        writeFileSync(join(testDir, 'archive.md'), newArchiveContent);
+
+        const result = await handler();
+
+        expect(result).toEqual({
+          content: [{
+            type: 'text',
+            text: 'Week of 2024-01-08 has already been archived. No changes made.',
+          }],
+        });
+      });
+
+      it('should return success message when skipping duplicate run', async() => {
+        // Pre-populate archive with current week
+        writeFileSync(join(testDir, 'archive.md'), `# Week of 2024-01-01
+- [x] Old completed task
+
+# Week of 2024-01-08
+- [x] Current week task
+- [ ] Another current task`);
+
+        const result = await handler();
+
+        expect(result.content[0].text).toBe('Week of 2024-01-08 has already been archived. No changes made.');
+        expect(result).not.toHaveProperty('isError');
+      });
+
+      it('should not modify files when week already archived', async() => {
+        // Store original file contents
+        const originalCurrent = readFileSync(join(testDir, 'current.md'), 'utf-8');
+        const originalBacklog = readFileSync(join(testDir, 'backlog.md'), 'utf-8');
+
+        // Pre-populate archive with current week
+        const originalArchive = readFileSync(join(testDir, 'archive.md'), 'utf-8');
+        const prePopulatedArchive = `${originalArchive  }\n\n# Week of 2024-01-08\n- [x] Pre-existing task`;
+
+        writeFileSync(join(testDir, 'archive.md'), prePopulatedArchive);
+
+        await handler();
+
+        // Files should remain unchanged
+        expect(readFileSync(join(testDir, 'current.md'), 'utf-8')).toBe(originalCurrent);
+        expect(readFileSync(join(testDir, 'backlog.md'), 'utf-8')).toBe(originalBacklog);
+        expect(readFileSync(join(testDir, 'archive.md'), 'utf-8')).toBe(prePopulatedArchive);
+      });
+
+      it('should not make git commits when week already archived', async() => {
+        // Pre-populate archive with current week
+        const archiveContent = readFileSync(join(testDir, 'archive.md'), 'utf-8');
+
+        writeFileSync(join(testDir, 'archive.md'), `${archiveContent  }\n\n# Week of 2024-01-08\n- [x] Already there`);
+
+        await handler();
+
+        // Should not have made any git commits
+        expect(gitUtils.commitChanges).not.toHaveBeenCalled();
+      });
+
+      it('should handle missing archive file gracefully during idempotency check', async() => {
+        // Remove archive file to simulate missing file
+        rmSync(join(testDir, 'archive.md'));
+
+        // Create empty archive file (this simulates what initializeWorkspace would do)
+        writeFileSync(join(testDir, 'archive.md'), '# Archive\n');
+
+        const result = await handler();
+
+        // Should proceed with normal operation since no archive exists
+        expect(result.content[0].text).toBe('Successfully completed week transition. Archived week of 2024-01-08.');
+        expect(result).not.toHaveProperty('isError');
+      });
+
+      it('should proceed normally when different week is in archive', async() => {
+        // Archive has different week, should proceed normally
+        const result = await handler();
+
+        expect(result.content[0].text).toBe('Successfully completed week transition. Archived week of 2024-01-08.');
+        expect(result).not.toHaveProperty('isError');
+
+        // Should have made commits for normal operation
+        expect(gitUtils.commitChanges).toHaveBeenCalledTimes(2);
+      });
+    });
+
     describe('MCP response structure', () => {
       it('should return proper MCP structure for success', async() => {
         const result = await handler();
@@ -465,6 +590,30 @@ describe('startWeek tool', () => {
         expect(result.content[0].type).toBe('text');
         expect(result.content[0]).toHaveProperty('text');
         expect(result.isError).toBe(true);
+      });
+
+      it('should return proper MCP structure for idempotent calls', async() => {
+        // First call
+        await handler();
+
+        // Reset git mocks for second call but keep date mocks
+        const gitMocks = {
+          hasUntrackedFiles: spyOn(gitUtils, 'hasUntrackedFiles').mockResolvedValue(true),
+          commitChanges: spyOn(gitUtils, 'commitChanges').mockResolvedValue(),
+        };
+
+        // Clear previous git mock calls for clean counting
+        gitMocks.hasUntrackedFiles.mockClear();
+        gitMocks.commitChanges.mockClear();
+
+        // Second call should still return proper structure
+        const result = await handler();
+
+        expect(Array.isArray(result.content)).toBe(true);
+        expect(result.content).toHaveLength(1);
+        expect(result.content[0].type).toBe('text');
+        expect(result.content[0]).toHaveProperty('text');
+        expect(result).not.toHaveProperty('isError');
       });
     });
   });

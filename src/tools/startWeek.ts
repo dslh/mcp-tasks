@@ -52,6 +52,19 @@ function filterTasksByCompletion(sectionContent: string[]): { finished: string[]
   return { finished, unfinished };
 }
 
+function checkIfWeekAlreadyArchived(archiveDate: string): boolean {
+  try {
+    const archiveContent = readFile('archive');
+    const sections = parseMarkdownSections(archiveContent);
+    const expectedTitle = `Week of ${archiveDate}`;
+
+    return sections.some(section => section.title === expectedTitle);
+  } catch {
+    // If archive file doesn't exist or can't be read, assume not archived
+    return false;
+  }
+}
+
 function addWeekToArchive(archiveDate: string, thisWeekContent: string[]): void {
   const sectionTitle = `Week of ${archiveDate}`;
   const newSection = [`# ${sectionTitle}`, ...thisWeekContent].join('\n');
@@ -76,12 +89,19 @@ function rebuildCurrentFile(
 }
 
 async function performWeekTransition(): Promise<string> {
-  // Step 1: Pre-backup commit
+  // Step 1: Check if week already archived (idempotency check)
+  const archiveDate = getArchiveWeekDate();
+
+  if (checkIfWeekAlreadyArchived(archiveDate)) {
+    return `Week of ${archiveDate} has already been archived. No changes made.`;
+  }
+
+  // Step 2: Pre-backup commit
   if (await hasUntrackedFiles()) {
     await commitChanges('Pre-start-week backup');
   }
 
-  // Step 2: Parse current.md
+  // Step 3: Parse current.md
   const currentContent = readFile('current');
   const sections = parseMarkdownSections(currentContent);
 
@@ -92,22 +112,20 @@ async function performWeekTransition(): Promise<string> {
     throw new Error('Required sections not found in current.md');
   }
 
-  // Step 3: Copy "This Week" to archive (entire section for record keeping)
-  const archiveDate = getArchiveWeekDate();
-
+  // Step 4: Copy "This Week" to archive (entire section for record keeping)
   addWeekToArchive(archiveDate, thisWeekSection.content);
 
-  // Step 4: Filter "This Week" tasks by completion
+  // Step 5: Filter "This Week" tasks by completion
   const { unfinished: thisWeekUnfinished } =
     filterTasksByCompletion(thisWeekSection.content);
 
-  // Step 5: Combine incomplete tasks with next week tasks for new "This Week"
+  // Step 6: Combine incomplete tasks with next week tasks for new "This Week"
   const newThisWeekTasks = [...thisWeekUnfinished, ...nextWeekSection.content];
 
-  // Step 6: Rebuild current.md
+  // Step 7: Rebuild current.md
   rebuildCurrentFile(newThisWeekTasks);
 
-  // Step 7: Final commit
+  // Step 8: Final commit
   const today = getCurrentDate();
 
   await commitChanges(`Completed week transition to ${today}`);
