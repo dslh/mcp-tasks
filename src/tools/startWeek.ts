@@ -40,12 +40,6 @@ function filterTasksByCompletion(sectionContent: string[]): { finished: string[]
       } else {
         unfinished.push(...taskLines);
       }
-    } else if (line.trim() === '') {
-      // Preserve empty lines in both arrays for now, we'll clean up later
-      // For now, add to unfinished to maintain structure
-      if (unfinished.length > 0) {
-        unfinished.push(line);
-      }
     }
   }
 

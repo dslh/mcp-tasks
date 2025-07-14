@@ -89,7 +89,7 @@ describe('startWeek tool', () => {
         expect(result).toEqual({
           content: [{
             type: 'text',
-            text: 'Successfully completed week transition. Archived week of 2024-01-08.\n\n# This Week\n- [ ] Unfinished this week task\n- [ ] Another unfinished task\n\n- [ ] Next week task 1\n- [ ] Next week task 2\n- [ ] Next week task with description\n  Next week description\n',
+            text: 'Successfully completed week transition. Archived week of 2024-01-08.\n\n# This Week\n- [ ] Unfinished this week task\n- [ ] Another unfinished task\n- [ ] Next week task 1\n- [ ] Next week task 2\n- [ ] Next week task with description\n  Next week description\n',
           }],
         });
 
